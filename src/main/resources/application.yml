@@ -1,4 +1,7 @@
 spring:
+  application:
+    name: Document-Management-System
+
   datasource:
     url: jdbc:postgresql://localhost:5432/dmsdb
     username: postgres
