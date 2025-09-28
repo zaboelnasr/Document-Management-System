@@ -17,8 +17,6 @@ public class DocumentService {
     }
 
     public Document saveDocument(Document doc) {
-        doc.setCreatedAt(LocalDateTime.now());
-        doc.setUpdatedAt(LocalDateTime.now());
         return repo.save(doc);
     }
 
