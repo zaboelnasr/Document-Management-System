@@ -96,6 +96,17 @@
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
             </plugin>
+
+            <!-- Unit tests -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>3.2.5</version>
+                <configuration>
+                    <!-- Allows Mockito to attach its agent without warnings -->
+                    <argLine>-XX:+EnableDynamicAgentLoading -Xshare:off</argLine>
+                </configuration>
+            </plugin>
         </plugins>
     </build>
 
