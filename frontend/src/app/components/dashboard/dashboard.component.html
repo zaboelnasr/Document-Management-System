@@ -1,0 +1,41 @@
+<h2>Documents</h2>
+
+<table border="1" cellpadding="8" cellspacing="0" style="width: 100%; border-collapse: collapse;">
+  <thead>
+  <tr style="background-color: #f0f0f0;">
+    <th>ID</th>
+    <th>File Name</th>
+    <th>Summary</th>
+    <th>Created At</th>
+    <th>Actions</th>
+  </tr>
+  </thead>
+  <tbody>
+  <tr *ngFor="let doc of documents, let i = index">
+    <td>{{ i + 1 }}</td>
+    <td *ngIf="!doc.editing">{{ doc.fileName }}</td>
+    <td *ngIf="doc.editing">
+      <input [(ngModel)]="doc.fileName" />
+    </td>
+
+    <td *ngIf="!doc.editing">{{ doc.summary }}</td>
+    <td *ngIf="doc.editing">
+      <input [(ngModel)]="doc.summary" />
+    </td>
+
+    <td>{{ doc.createdAt || '-' }}</td>
+    <td>
+      <button *ngIf="!doc.editing" (click)="editDocument(doc)">Edit</button>
+      <button type="button" *ngIf="doc.editing" (click)="saveDocument(doc)" class="btn btn-success btn-sm">Save</button>      <button *ngIf="doc.editing" (click)="cancelEdit(doc)">Cancel</button>
+      <button (click)="deleteDocument(doc.id)">Delete</button>
+    </td>
+  </tr>
+  </tbody>
+</table>
+
+<h3>Add Document</h3>
+<form (ngSubmit)="addDocument()">
+  <input type="text" placeholder="File Name" [(ngModel)]="newDocument.fileName" name="fileName" required />
+  <input type="text" placeholder="Summary" [(ngModel)]="newDocument.summary" name="summary" required />
+  <button type="submit">Add</button>
+</form>

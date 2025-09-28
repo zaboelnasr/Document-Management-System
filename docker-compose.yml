@@ -1,5 +1,7 @@
 version: "3.8"
+
 services:
+  # Database
   db:
     image: postgres:15
     container_name: dms-db
@@ -12,6 +14,34 @@ services:
       - "5432:5432"
     volumes:
       - db_data:/var/lib/postgresql/data
+
+  # Spring Boot backend
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: dms-backend
+    restart: always
+    ports:
+      - "8080:8080"
+    depends_on:
+      - db
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/dmsdb
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: postgres
+
+  # Angular frontend (served by nginx)
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: dms-frontend
+    restart: always
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
 
 volumes:
   db_data:
