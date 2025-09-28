@@ -1,0 +1,80 @@
+/* dashboard.component.css */
+
+h2, h3 {
+  font-family: Arial, sans-serif;
+  margin-bottom: 12px;
+  color: #333;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 20px;
+  font-family: Arial, sans-serif;
+  font-size: 14px;
+}
+
+thead tr {
+  background-color: #4CAF50;
+  color: black;
+  text-align: left;
+}
+
+th, td {
+  padding: 12px;
+  border-bottom: 1px solid #ddd;
+}
+
+tbody tr:hover {
+  background-color: #f9f9f9;
+}
+
+input[type="text"] {
+  padding: 6px;
+  width: 90%;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+button {
+  padding: 6px 12px;
+  margin: 0 2px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+button:hover {
+  opacity: 0.9;
+}
+
+button:nth-child(1) { /* Edit */
+  background-color: #2196F3;
+  color: white;
+}
+
+button:nth-child(2) { /* Save */
+  background-color: #4CAF50;
+  color: white;
+}
+
+button:nth-child(3) { /* Cancel */
+  background-color: #f0ad4e;
+  color: white;
+}
+
+button:nth-child(4) { /* Delete */
+  background-color: #f44336;
+  color: white;
+}
+
+form {
+  display: flex;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+form input {
+  flex: 1;
+}

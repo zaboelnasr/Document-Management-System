@@ -17,7 +17,9 @@ services:
 
   # Spring Boot backend
   backend:
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile
     container_name: dms-backend
     restart: always
     ports:
@@ -31,7 +33,9 @@ services:
 
   # Angular frontend (served by nginx)
   frontend:
-    build: ./frontend
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
     container_name: dms-frontend
     restart: always
     ports:

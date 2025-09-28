@@ -1,7 +1,7 @@
 package com.dms.documentmanagementsystem.controller;
 
 import com.dms.documentmanagementsystem.model.Document;
-import com.dms.documentmanagementsystem.service.DocumentService;
+import com.dms.documentmanagementsystem.repository.DocumentRepository;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -10,31 +10,42 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/documents")
 public class DocumentController {
-    private final DocumentService service;
 
-    public DocumentController(DocumentService service) {
-        this.service = service;
-    }
+    private final DocumentRepository documentRepository;
 
-    @PostMapping
-    public Document upload(@RequestBody Document doc) {
-        return service.saveDocument(doc);
-    }
-
-    @GetMapping("/{id}")
-    public ResponseEntity<Document> get(@PathVariable Long id) {
-        return service.getDocument(id)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+    // ✅ Constructor injection
+    public DocumentController(DocumentRepository documentRepository) {
+        this.documentRepository = documentRepository;
     }
 
     @GetMapping
-    public List<Document> all() {
-        return service.getAllDocuments();
+    public List<Document> getAllDocuments() {
+        return documentRepository.findAll();
     }
 
+    @PostMapping
+    public Document createDocument(@RequestBody Document document) {
+        return documentRepository.save(document);
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<Document> updateDocument(@PathVariable Long id, @RequestBody Document updatedDoc) {
+        return documentRepository.findById(id)
+                .map(existingDoc -> {
+                    existingDoc.setFileName(updatedDoc.getFileName());
+                    existingDoc.setSummary(updatedDoc.getSummary());
+                    return ResponseEntity.ok(documentRepository.save(existingDoc));
+                })
+                .orElseGet(() -> ResponseEntity.notFound().build());
+    }
+
+
     @DeleteMapping("/{id}")
-    public void delete(@PathVariable Long id) {
-        service.deleteDocument(id);
+    public ResponseEntity<Void> deleteDocument(@PathVariable Long id) {
+        if (!documentRepository.existsById(id)) {
+            return ResponseEntity.notFound().build();
+        }
+        documentRepository.deleteById(id);
+        return ResponseEntity.noContent().build();
     }
 }
