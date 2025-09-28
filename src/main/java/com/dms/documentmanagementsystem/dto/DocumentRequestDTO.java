@@ -1,16 +1,16 @@
 package com.dms.documentmanagementsystem.dto;
 
 import jakarta.validation.constraints.NotBlank;
+import lombok.Getter;
+import lombok.Setter;
 
+@Setter
+@Getter
 public class DocumentRequestDTO {
+    // getters/setters
     @NotBlank
     private String fileName;
 
-    private String summary; // optional
+    private String summary;
 
-    // getters/setters
-    public String getFileName() { return fileName; }
-    public void setFileName(String fileName) { this.fileName = fileName; }
-    public String getSummary() { return summary; }
-    public void setSummary(String summary) { this.summary = summary; }
 }
