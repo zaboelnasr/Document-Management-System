@@ -16,7 +16,7 @@ public class DocumentService {
         this.repo = repo;
     }
 
-    public Document saveDocument(Document doc) {
+    public Document create(Document doc) {
         return repo.save(doc);
     }
 

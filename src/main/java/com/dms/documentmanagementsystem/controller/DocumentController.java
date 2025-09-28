@@ -1,51 +1,56 @@
 package com.dms.documentmanagementsystem.controller;
 
+import com.dms.documentmanagementsystem.dto.DocumentRequestDTO;
+import com.dms.documentmanagementsystem.dto.DocumentResponseDTO;
+import com.dms.documentmanagementsystem.mapper.DocumentMapper;
 import com.dms.documentmanagementsystem.model.Document;
-import com.dms.documentmanagementsystem.repository.DocumentRepository;
+import com.dms.documentmanagementsystem.service.DocumentService;
+import jakarta.validation.Valid;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
+import java.net.URI;
 
 @RestController
 @RequestMapping("/api/documents")
 public class DocumentController {
+    private final DocumentService service;
 
-    private final DocumentRepository documentRepository;
-
-    // ✅ Constructor injection
-    public DocumentController(DocumentRepository documentRepository) {
-        this.documentRepository = documentRepository;
+    public DocumentController(DocumentService service) {
+        this.service = service;
     }
 
     @GetMapping
-    public List<Document> getAllDocuments() {
-        return documentRepository.findAll();
+    public Page<DocumentResponseDTO> getAll(Pageable pageable) {
+        return service.getAll(pageable).map(DocumentMapper::toDTO);
+    }
+
+    @GetMapping("/{id}")
+    public DocumentResponseDTO getOne(@PathVariable Long id) {
+        return DocumentMapper.toDTO(service.getById(id));
     }
 
     @PostMapping
-    public Document createDocument(@RequestBody Document document) {
-        return documentRepository.save(document);
+    public ResponseEntity<DocumentResponseDTO> create(@Valid @RequestBody DocumentRequestDTO request) {
+        Document created = service.create(DocumentMapper.toEntity(request));
+        DocumentResponseDTO body = DocumentMapper.toDTO(created);
+        URI location = URI.create("/api/documents/" + created.getId());
+        return ResponseEntity.created(location).body(body);
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Document> updateDocument(@PathVariable Long id, @RequestBody Document updatedDoc) {
-        return documentRepository.findById(id)
-                .map(existingDoc -> {
-                    existingDoc.setFileName(updatedDoc.getFileName());
-                    existingDoc.setSummary(updatedDoc.getSummary());
-                    return ResponseEntity.ok(documentRepository.save(existingDoc));
-                })
-                .orElseGet(() -> ResponseEntity.notFound().build());
+    public DocumentResponseDTO update(@PathVariable Long id,
+                                      @Valid @RequestBody DocumentRequestDTO request) {
+        Document updated = service.update(id, DocumentMapper.toEntity(request));
+        return DocumentMapper.toDTO(updated);
     }
 
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteDocument(@PathVariable Long id) {
-        if (!documentRepository.existsById(id)) {
-            return ResponseEntity.notFound().build();
-        }
-        documentRepository.deleteById(id);
+    public ResponseEntity<Void> delete(@PathVariable Long id) {
+        service.delete(id);
         return ResponseEntity.noContent().build();
     }
 }
