@@ -2,11 +2,11 @@ package com.dms.documentmanagementsystem.service;
 
 import com.dms.documentmanagementsystem.model.Document;
 import com.dms.documentmanagementsystem.repository.DocumentRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Optional;
+import java.util.NoSuchElementException;
 
 @Service
 public class DocumentService {
@@ -20,15 +20,27 @@ public class DocumentService {
         return repo.save(doc);
     }
 
-    public Optional<Document> getDocument(Long id) {
-        return repo.findById(id);
+    public Document update(Long id, Document changes) {
+        Document existing = repo.findById(id)
+                .orElseThrow(() -> new NoSuchElementException("Document " + id + " not found"));
+        existing.setFileName(changes.getFileName());
+        existing.setSummary(changes.getSummary());
+        return repo.save(existing);
     }
 
-    public List<Document> getAllDocuments() {
-        return repo.findAll();
-    }
-
-    public void deleteDocument(Long id) {
+    public void delete(Long id) {
+        if (!repo.existsById(id)) {
+            throw new NoSuchElementException("Document " + id + " not found");
+        }
         repo.deleteById(id);
+    }
+
+    public Document getById(Long id) {
+        return repo.findById(id)
+                .orElseThrow(() -> new NoSuchElementException("Document " + id + " not found"));
+    }
+
+    public Page<Document> getAll(Pageable pageable) {
+        return repo.findAll(pageable);
     }
 }
