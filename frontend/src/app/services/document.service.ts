@@ -1,48 +1,61 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
 
-// 👇 Document interface
-export interface Document {
-  id?: number;
+export interface DocumentDto {
+  id: number;
   fileName: string;
   summary: string;
   content?: any;
   createdAt?: string;
   updatedAt?: string;
-  editing?: boolean;
 }
 
-@Injectable({
-  providedIn: 'root'
-})
+export interface Page<T> {
+  content: T[];
+  totalElements: number;
+  totalPages: number;
+  number: number;
+  size: number;
+  first: boolean;
+  last: boolean;
+}
+
+export interface CreateDocumentRequest {
+  fileName: string;
+  summary: string;
+}
+
+export interface UpdateDocumentRequest {
+  fileName: string;
+  summary: string;
+}
+
+@Injectable({ providedIn: 'root' })
 export class DocumentService {
-  private apiUrl = 'http://localhost:8080/api/documents';  // backend REST API
+  private readonly apiUrl = 'http://localhost:8080/api/documents';
 
   constructor(private http: HttpClient) {}
 
-  // GET all documents
-  getDocuments(): Observable<Document[]> {
-    return this.http.get<Document[]>(this.apiUrl);
+  getDocuments() {
+    return this.http.get<Page<DocumentDto>>(this.apiUrl).pipe(
+      map(p => p.content ?? [])
+    );
   }
 
-  // GET one document by id
-  getDocument(id: number): Observable<Document> {
-    return this.http.get<Document>(`${this.apiUrl}/${id}`);
+  getDocument(id: number): Observable<DocumentDto> {
+    return this.http.get<DocumentDto>(`${this.apiUrl}/${id}`);
   }
 
-  // POST: add a new document
-  addDocument(doc: Document): Observable<Document> {
-    return this.http.post<Document>(this.apiUrl, doc);
+  addDocument(doc: CreateDocumentRequest): Observable<DocumentDto> {
+    return this.http.post<DocumentDto>(this.apiUrl, doc);
   }
 
-  // PUT: update an existing document
-  updateDocument(id: number, doc: Document): Observable<Document> {
-    return this.http.put<Document>(`${this.apiUrl}/${id}`, doc);
+  updateDocument(id: number, doc: UpdateDocumentRequest): Observable<DocumentDto> {
+    return this.http.put<DocumentDto>(`${this.apiUrl}/${id}`, doc);
   }
 
-
-  // DELETE: remove a document
   deleteDocument(id: number): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/${id}`);
   }

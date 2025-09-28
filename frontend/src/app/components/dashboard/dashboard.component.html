@@ -11,8 +11,8 @@
   </tr>
   </thead>
   <tbody>
-  <tr *ngFor="let doc of documents, let i = index">
-    <td>{{ i + 1 }}</td>
+  <tr *ngFor="let doc of documents; let i = index">
+    <td>{{ doc.id }}</td>
     <td *ngIf="!doc.editing">{{ doc.fileName }}</td>
     <td *ngIf="doc.editing">
       <input [(ngModel)]="doc.fileName" />
@@ -23,7 +23,7 @@
       <input [(ngModel)]="doc.summary" />
     </td>
 
-    <td>{{ doc.createdAt || '-' }}</td>
+    <td>{{ doc.createdAt ? (doc.createdAt | date:'short') : '-' }}</td>
     <td>
       <button *ngIf="!doc.editing" (click)="editDocument(doc)">Edit</button>
       <button type="button" *ngIf="doc.editing" (click)="saveDocument(doc)" class="btn btn-success btn-sm">Save</button>      <button *ngIf="doc.editing" (click)="cancelEdit(doc)">Cancel</button>
