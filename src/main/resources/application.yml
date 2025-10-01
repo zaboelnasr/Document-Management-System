@@ -3,10 +3,14 @@ spring:
     name: Document-Management-System
 
   datasource:
-    url: jdbc:postgresql://localhost:5432/dmsdb
-    username: postgres
-    password: postgres
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/dmsdb}
+    username: ${SPRING_DATASOURCE_USERNAME:postgres}
+    password: ${SPRING_DATASOURCE_PASSWORD:postgres}
+
   jpa:
     hibernate:
       ddl-auto: update
     show-sql: true
+
+server:
+  port: ${SERVER_PORT:8080}
