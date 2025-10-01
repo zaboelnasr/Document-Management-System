@@ -2,20 +2,26 @@
 This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 19.2.17.
 
 ## Development server
-To start a local development server, run the following commands from the root directory:
+First, make sure you have docker running!
+
+To start a local development servery follow these steps:
 ```bash
 docker compose up -d db
-cd frontend
+```
+then run the ../src/main/java/com.dms.documentmanagementsystem/DocumentManagementSystemApplication.java application simply by pressing the green play button.
+```bash
 ng serve
 ```
 Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
 
 ## Docker server
-To start a docker only server, run the following command from the root directory:
+First, make sure you have docker running!
+
+To start a docker only server, run the following command:
 ```bash
 docker compose up -d --build
 ```
-Once all containers are up, open your browser and navigate to `http://localhost/`. The application will NOT automatically reload whenever you modify any of the source files.
+Once all containers are up, open your browser and navigate to `http://localhost/`. The application will **NOT** automatically reload whenever you modify any of the source files.
 
 ## Code scaffolding
 Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
