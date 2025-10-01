@@ -34,7 +34,7 @@ export interface UpdateDocumentRequest {
 
 @Injectable({ providedIn: 'root' })
 export class DocumentService {
-  private readonly apiUrl = 'http://localhost:8080/api/documents';
+  private readonly apiUrl = '/api/documents';
 
   constructor(private http: HttpClient) {}
 
