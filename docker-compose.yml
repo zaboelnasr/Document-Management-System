@@ -1,5 +1,6 @@
+version: '3.9'
+
 services:
-  # Database
   db:
     image: postgres:15
     container_name: dms-db
@@ -13,12 +14,24 @@ services:
     volumes:
       - db_data:/var/lib/postgresql/data
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U postgres -d dmsdb" ]
+      test: ["CMD-SHELL", "pg_isready -U postgres -d dmsdb"]
       interval: 5s
       timeout: 5s
       retries: 10
 
-  # Spring Boot backend
+  rabbitmq:
+    image: rabbitmq:3.13-management
+    container_name: dms-rabbitmq
+    restart: always
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
   backend:
     build:
       context: .
@@ -31,17 +44,23 @@ services:
       SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/dmsdb
       SPRING_DATASOURCE_USERNAME: postgres
       SPRING_DATASOURCE_PASSWORD: postgres
+      SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_RABBITMQ_PORT: 5672
+      DMS_RMQ_EXCHANGE: dms.documents
+      DMS_RMQ_ROUTING_UPLOAD: document.uploaded
+      DMS_RMQ_QUEUE_UPLOAD: dms.document.uploaded
     depends_on:
       db:
         condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
     healthcheck:
-      test: [ "CMD-SHELL", "curl -fsS -o /dev/null http://localhost:8080/actuator/health/readiness" ]
+      test: ["CMD-SHELL", "curl -fsS -o /dev/null http://localhost:8080/actuator/health/readiness"]
       interval: 5s
       timeout: 3s
       retries: 10
       start_period: 15s
 
-  # Angular frontend (served by nginx)
   frontend:
     build:
       context: ./frontend
@@ -52,6 +71,20 @@ services:
       - "80:80"
     depends_on:
       backend:
+        condition: service_healthy
+
+  ocr-worker:
+    build:
+      context: ./ocr-worker
+      dockerfile: Dockerfile
+    container_name: dms-ocr-worker
+    restart: always
+    environment:
+      SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_RABBITMQ_PORT: 5672
+      DMS_RMQ_QUEUE_UPLOAD: dms.document.uploaded
+    depends_on:
+      rabbitmq:
         condition: service_healthy
 
 volumes:

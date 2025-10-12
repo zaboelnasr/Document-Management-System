@@ -4,6 +4,7 @@ import com.dms.documentmanagementsystem.model.Document;
 import com.dms.documentmanagementsystem.repository.DocumentRepository;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 
 import java.util.NoSuchElementException;
 import java.util.Optional;
@@ -16,9 +17,10 @@ class DocumentServiceTest {
 
     @Test
     void create_savesDocument() {
-        // Arrange (Mock Repo)
+        // Arrange
         DocumentRepository repo = Mockito.mock(DocumentRepository.class);
-        DocumentService service = new DocumentService(repo);
+        RabbitTemplate rabbitTemplate = Mockito.mock(RabbitTemplate.class);
+        DocumentService service = new DocumentService(repo, rabbitTemplate);
 
         Document toSave = new Document();
         toSave.setFileName("a.pdf");
@@ -35,12 +37,14 @@ class DocumentServiceTest {
         // Assert
         assertEquals(1L, result.getId());
         verify(repo).save(any(Document.class));
+        verify(rabbitTemplate).convertAndSend(anyString(), anyString(), Optional.ofNullable(any()));
     }
 
     @Test
     void getById_notFound_throws() {
         DocumentRepository repo = Mockito.mock(DocumentRepository.class);
-        DocumentService service = new DocumentService(repo);
+        RabbitTemplate rabbitTemplate = Mockito.mock(RabbitTemplate.class);
+        DocumentService service = new DocumentService(repo, rabbitTemplate);
 
         when(repo.findById(999L)).thenReturn(Optional.empty());
 
@@ -50,7 +54,8 @@ class DocumentServiceTest {
     @Test
     void update_updatesFields() {
         DocumentRepository repo = Mockito.mock(DocumentRepository.class);
-        DocumentService service = new DocumentService(repo);
+        RabbitTemplate rabbitTemplate = Mockito.mock(RabbitTemplate.class);
+        DocumentService service = new DocumentService(repo, rabbitTemplate);
 
         Document existing = new Document();
         existing.setId(5L);
@@ -74,7 +79,8 @@ class DocumentServiceTest {
     @Test
     void delete_notFound_throws() {
         DocumentRepository repo = Mockito.mock(DocumentRepository.class);
-        DocumentService service = new DocumentService(repo);
+        RabbitTemplate rabbitTemplate = Mockito.mock(RabbitTemplate.class);
+        DocumentService service = new DocumentService(repo, rabbitTemplate);
 
         when(repo.existsById(42L)).thenReturn(false);
 
