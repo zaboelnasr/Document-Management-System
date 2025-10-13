@@ -28,3 +28,11 @@ management:
     health:
       probes:
         enabled: true
+
+  dms:
+    rmq:
+      exchange: dms.exchange
+      routing:
+        upload: dms.document.uploaded
+      queue:
+        upload: dms.document.uploaded
