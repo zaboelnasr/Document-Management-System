@@ -37,7 +37,7 @@ management:
 dms:
   rmq:
     exchange: dms.exchange
-    routing:
-      upload: dms.document.uploaded
     queue:
+      upload: dms.document.uploaded
+    routing:
       upload: dms.document.uploaded
