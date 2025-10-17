@@ -12,6 +12,14 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
+import org.springframework.web.multipart.MultipartFile;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
+import java.io.IOException;
+import java.time.LocalDateTime;
 
 @Service
 public class DocumentService {
@@ -29,6 +37,43 @@ public class DocumentService {
     public DocumentService(DocumentRepository repo, RabbitTemplate rabbitTemplate) {
         this.repo = repo;
         this.rabbitTemplate = rabbitTemplate;
+    }
+
+    // ✅ NEW: handle file upload
+    public Document handleFileUpload(MultipartFile file, String summary) {
+        try {
+            // 1️⃣ Create uploads directory if not exists
+            Path uploadDir = Paths.get("uploads");
+            if (!Files.exists(uploadDir)) {
+                Files.createDirectories(uploadDir);
+            }
+
+            // 2️⃣ Clean file name and save file
+            String fileName = StringUtils.cleanPath(file.getOriginalFilename());
+            Path filePath = uploadDir.resolve(fileName);
+            Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
+
+            // 3️⃣ Save document metadata in DB
+            Document document = new Document();
+            document.setFileName(fileName);
+            document.setSummary(summary);
+            document.setCreatedAt(LocalDateTime.now());
+
+            Document saved = repo.save(document);
+            log.info("Uploaded and saved document: id={}, fileName={}", saved.getId(), saved.getFileName());
+
+            // 4️⃣ Publish RabbitMQ event for OCR
+            DocumentUploadedEvent event = new DocumentUploadedEvent(
+                    saved.getId(), saved.getFileName(), saved.getSummary(), saved.getCreatedAt());
+            rabbitTemplate.convertAndSend(exchange, uploadRoutingKey, event);
+            log.info("Published DocumentUploadedEvent for id={} to exchange='{}'", saved.getId(), exchange);
+
+            return saved;
+
+        } catch (IOException ex) {
+            log.error("Failed to upload file", ex);
+            throw new ServiceException("File upload failed", ex);
+        }
     }
 
     public Document create(Document doc) {
