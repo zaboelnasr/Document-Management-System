@@ -2,34 +2,48 @@
 
 <table border="1" cellpadding="8" cellspacing="0" style="width: 100%; border-collapse: collapse;">
   <thead>
-  <tr style="background-color: #f0f0f0;">
-    <th>ID</th>
-    <th>File Name</th>
-    <th>Summary</th>
-    <th>Created At</th>
-    <th>Actions</th>
-  </tr>
+    <tr style="background-color: #f0f0f0;">
+      <th>ID</th>
+      <th>File Name</th>
+      <th>Summary</th>
+      <th>Created At</th>
+      <th>Actions</th>
+    </tr>
   </thead>
   <tbody>
-  <tr *ngFor="let doc of documents; let i = index">
-    <td>{{ doc.id }}</td>
-    <td *ngIf="!doc.editing">{{ doc.fileName }}</td>
-    <td *ngIf="doc.editing">
-      <input [(ngModel)]="doc.fileName" />
-    </td>
-
-    <td *ngIf="!doc.editing">{{ doc.summary }}</td>
-    <td *ngIf="doc.editing">
-      <input [(ngModel)]="doc.summary" />
-    </td>
-
-    <td>{{ doc.createdAt ? (doc.createdAt | date:'short') : '-' }}</td>
-    <td>
-      <button *ngIf="!doc.editing" (click)="editDocument(doc)">Edit</button>
-      <button type="button" *ngIf="doc.editing" (click)="saveDocument(doc)" class="btn btn-success btn-sm">Save</button>      <button *ngIf="doc.editing" (click)="cancelEdit(doc)">Cancel</button>
-      <button (click)="deleteDocument(doc.id)">Delete</button>
-    </td>
-  </tr>
+    @for (doc of documents; track doc; let i = $index) {
+      <tr>
+        <td>{{ doc.id }}</td>
+        @if (!doc.editing) {
+          <td>{{ doc.fileName }}</td>
+        }
+        @if (doc.editing) {
+          <td>
+            <input [(ngModel)]="doc.fileName" />
+          </td>
+        }
+        @if (!doc.editing) {
+          <td>{{ doc.summary }}</td>
+        }
+        @if (doc.editing) {
+          <td>
+            <input [(ngModel)]="doc.summary" />
+          </td>
+        }
+        <td>{{ doc.createdAt ? (doc.createdAt | date:'short') : '-' }}</td>
+        <td>
+          @if (!doc.editing) {
+            <button (click)="editDocument(doc)">Edit</button>
+          }
+          @if (doc.editing) {
+            <button type="button" (click)="saveDocument(doc)" class="btn btn-success btn-sm">Save</button>
+            }      @if (doc.editing) {
+            <button (click)="cancelEdit(doc)">Cancel</button>
+          }
+          <button (click)="deleteDocument(doc.id)">Delete</button>
+        </td>
+      </tr>
+    }
   </tbody>
 </table>
 
