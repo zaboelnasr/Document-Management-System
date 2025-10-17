@@ -44,8 +44,8 @@ services:
       SPRING_DATASOURCE_PASSWORD: postgres
       SPRING_RABBITMQ_HOST: rabbitmq
       SPRING_RABBITMQ_PORT: 5672
-      DMS_RMQ_EXCHANGE: dms.documents
-      DMS_RMQ_ROUTING_UPLOAD: document.uploaded
+      DMS_RMQ_EXCHANGE: dms.exchange
+      DMS_RMQ_ROUTING_UPLOAD: dms.document.uploaded
       DMS_RMQ_QUEUE_UPLOAD: dms.document.uploaded
     depends_on:
       db:
@@ -80,6 +80,8 @@ services:
     environment:
       SPRING_RABBITMQ_HOST: rabbitmq
       SPRING_RABBITMQ_PORT: 5672
+      DMS_RMQ_EXCHANGE: dms.exchange
+      DMS_RMQ_ROUTING_UPLOAD: dms.document.uploaded
       DMS_RMQ_QUEUE_UPLOAD: dms.document.uploaded
     depends_on:
       rabbitmq:
