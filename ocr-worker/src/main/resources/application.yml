@@ -11,6 +11,6 @@ dms:
   rmq:
     exchange: dms.exchange
     queue:
-      upload: dms.upload.queue
+      upload: dms.document.uploaded
     routing:
-      upload: upload
+      upload: dms.document.uploaded
