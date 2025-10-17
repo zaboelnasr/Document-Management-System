@@ -2,6 +2,11 @@ spring:
   application:
     name: Document-Management-System
 
+  servlet:
+    multipart:
+      max-file-size: 20MB
+      max-request-size: 20MB
+
   datasource:
     url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/dmsdb}
     username: ${SPRING_DATASOURCE_USERNAME:postgres}
@@ -23,8 +28,16 @@ management:
   endpoints:
     web:
       exposure:
-        include: health,info
+        include: health,info,metrics
   endpoint:
     health:
       probes:
         enabled: true
+
+dms:
+  rmq:
+    exchange: dms.exchange
+    routing:
+      upload: dms.document.uploaded
+    queue:
+      upload: dms.document.uploaded

@@ -10,6 +10,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.net.URI;
 
@@ -52,5 +53,10 @@ public class DocumentController {
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         service.delete(id);
         return ResponseEntity.noContent().build();
+    }
+    @PostMapping("/upload")
+    public Document upload(@RequestParam("file") MultipartFile file,
+                           @RequestParam("summary") String summary) {
+        return service.handleFileUpload(file, summary);
     }
 }

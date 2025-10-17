@@ -1,80 +1,176 @@
-/* dashboard.component.css */
-
-h2, h3 {
-  font-family: Arial, sans-serif;
-  margin-bottom: 12px;
+/* ===== Layout ===== */
+body {
+  background-color: #f8f9fc;
+  font-family: 'Segoe UI', Roboto, Arial, sans-serif;
   color: #333;
+  margin: 0;
+  padding: 0;
 }
 
-table {
+/* Center content and make it wider */
+.container {
+  width: 90%;
+  max-width: 1400px;
+  margin: 40px auto;
+}
+
+/* ===== Header ===== */
+h3 {
+  font-size: 2rem;
+  color: #0056b3;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 1.5rem;
+}
+
+h3::before {
+  content: '📁';
+  font-size: 1.8rem;
+}
+
+/* ===== Card Styling ===== */
+.card {
+  border: none;
+  border-radius: 1rem;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+  background: white;
+  margin-bottom: 2rem;
+}
+
+.card-header {
+  font-size: 1.1rem;
+  background-color: #e9f2ff;
+  color: #003d80;
+  border-bottom: 2px solid #007bff20;
+  font-weight: 600;
+  padding: 1rem 1.5rem;
+}
+
+/* ===== Table ===== */
+.table {
+  border-radius: 1rem;
+  overflow: hidden;
   width: 100%;
-  border-collapse: collapse;
-  margin-bottom: 20px;
-  font-family: Arial, sans-serif;
-  font-size: 14px;
-}
-
-thead tr {
-  background-color: #4CAF50;
-  color: black;
   text-align: left;
 }
 
-th, td {
-  padding: 12px;
-  border-bottom: 1px solid #ddd;
+.table thead {
+  background-color: #007bff;
+  color: white;
+  font-size: 1rem;
 }
 
-tbody tr:hover {
-  background-color: #f9f9f9;
+.table-hover tbody tr:hover {
+  background-color: #f1f7ff;
+  transition: background-color 0.2s ease;
 }
 
-input[type="text"] {
-  padding: 6px;
-  width: 90%;
-  border: 1px solid #ccc;
-  border-radius: 4px;
+.table td {
+  vertical-align: middle;
+  font-size: 1rem;
+  padding: 0.9rem;
 }
 
-button {
+.table th {
+  padding: 1rem;
+  font-weight: 600;
+}
+
+/* ===== Buttons ===== */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s ease;
+  font-size: 0.9rem;
   padding: 6px 12px;
-  margin: 0 2px;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 13px;
 }
 
-button:hover {
-  opacity: 0.9;
+.btn:hover {
+  transform: scale(1.05);
 }
 
-button:nth-child(1) { /* Edit */
-  background-color: #2196F3;
+.btn-outline-primary {
+  border-color: #007bff;
+  color: #007bff;
+}
+.btn-outline-primary:hover {
+  background-color: #007bff;
   color: white;
 }
 
-button:nth-child(2) { /* Save */
-  background-color: #4CAF50;
+.btn-outline-danger {
+  border-color: #dc3545;
+  color: #dc3545;
+}
+.btn-outline-danger:hover {
+  background-color: #dc3545;
   color: white;
 }
 
-button:nth-child(3) { /* Cancel */
-  background-color: #f0ad4e;
-  color: white;
+/* ===== Badges ===== */
+.badge {
+  font-size: 0.9rem;
+  padding: 0.55em 0.9em;
+  border-radius: 0.5rem;
+  letter-spacing: 0.3px;
 }
 
-button:nth-child(4) { /* Delete */
-  background-color: #f44336;
-  color: white;
-}
-
+/* ===== Upload Section ===== */
 form {
-  display: flex;
-  gap: 10px;
   margin-top: 10px;
 }
 
-form input {
-  flex: 1;
+input[type='file'],
+input[type='text'] {
+  border-radius: 0.4rem;
+  border: 1px solid #ced4da;
+  font-size: 1rem;
+  padding: 0.5rem 0.75rem;
+}
+
+input[type='file']:focus,
+input[type='text']:focus {
+  border-color: #007bff;
+  box-shadow: 0 0 0 0.15rem rgba(0, 123, 255, 0.25);
+}
+
+.btn-success {
+  background-color: #198754;
+  border: none;
+  font-size: 1rem;
+  padding: 0.6rem;
+}
+.btn-success:hover {
+  background-color: #157347;
+}
+
+/* ===== Table Animation ===== */
+.table tr {
+  transition: transform 0.1s ease, background-color 0.2s ease;
+}
+.table tr:hover {
+  transform: scale(1.01);
+}
+
+.alert {
+  border-radius: 0.5rem;
+  font-size: 0.9rem;
+}
+
+/* ===== Responsive ===== */
+@media (max-width: 992px) {
+  .container {
+    width: 95%;
+  }
+
+  h3 {
+    font-size: 1.6rem;
+  }
+
+  .table td,
+  .table th {
+    font-size: 0.9rem;
+  }
 }
