@@ -20,7 +20,7 @@ public class DocumentUploadedEvent implements Serializable {
     private String summary;
     @Setter
     @Getter
-    private Instant createdAt;
+    private LocalDateTime createdAt;
     @Setter
     @Getter
     private String bucket;
@@ -34,7 +34,7 @@ public class DocumentUploadedEvent implements Serializable {
             Long id,
             String fileName,
             String summary,
-            Instant createdAt,
+            LocalDateTime createdAt,
             String bucket,
             String objectKey
     ) {
