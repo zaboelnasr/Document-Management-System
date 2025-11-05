@@ -1,48 +1,60 @@
 package com.dms.ocr.event;
 
+import lombok.Getter;
+import lombok.Setter;
+
+import java.io.Serializable;
 import java.time.LocalDateTime;
 
-public class DocumentUploadedEvent {
+public class DocumentUploadedEvent implements Serializable {
 
+    @Setter
+    @Getter
     private Long id;
+    @Setter
+    @Getter
     private String fileName;
+    @Setter
+    @Getter
     private String summary;
+    @Setter
+    @Getter
     private LocalDateTime createdAt;
+    @Setter
+    @Getter
+    private String bucket;
+    @Setter
+    @Getter
+    private String objectKey;
 
-    // Default constructor (needed for Jackson deserialization)
-    public DocumentUploadedEvent() {
-    }
+    public DocumentUploadedEvent() {}
 
-    public DocumentUploadedEvent(Long id, String fileName, String summary, LocalDateTime createdAt) {
+    public DocumentUploadedEvent(
+            Long id,
+            String fileName,
+            String summary,
+            LocalDateTime createdAt,
+            String bucket,
+            String objectKey
+    ) {
         this.id = id;
         this.fileName = fileName;
         this.summary = summary;
         this.createdAt = createdAt;
-    }
-
-    public Long getId() {
-        return id;
-    }
-
-    public String getFileName() {
-        return fileName;
-    }
-
-    public String getSummary() {
-        return summary;
-    }
-
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
+        this.bucket = bucket;
+        this.objectKey = objectKey;
     }
 
     @Override
     public String toString() {
         return "DocumentUploadedEvent{" +
                 "id=" + id +
-                ", fileName='" + fileName + '\'' +
-                ", summary='" + summary + '\'' +
+                ", filename=" + fileName +
+                ", summary=" + summary +
                 ", createdAt=" + createdAt +
+                ", bucket='" + bucket + '\'' +
+                ", objectKey='" + objectKey + '\'' +
                 '}';
     }
 }
+
