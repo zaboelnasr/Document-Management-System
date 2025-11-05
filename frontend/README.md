@@ -24,9 +24,19 @@ docker compose up -d --build
 Once all containers are up, open your browser and navigate to `http://localhost/`. The application will **NOT** automatically reload whenever you modify any of the source files.
 
 ## Helpful Dev Interfaces
-MinIO: http://localhost:9001
+### MinIO: 
+http://localhost:9001
 
-RabbitMQ: http://localhost:15672
+Username: minio
+
+Password: minio123
+
+### RabbitMQ: 
+http://localhost:15672
+
+Username: guest
+
+Password: guest
 
 ## Code scaffolding
 Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
