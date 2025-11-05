@@ -1,10 +1,60 @@
 package com.dms.documentmanagementsystem.messaging;
 
+import lombok.Getter;
+import lombok.Setter;
+
+import java.io.Serializable;
+import java.time.Instant;
 import java.time.LocalDateTime;
 
-public record DocumentUploadedEvent(
-        Long id,
-        String fileName,
-        String summary,
-        LocalDateTime createdAt
-) {}
+public class DocumentUploadedEvent implements Serializable {
+
+    @Setter
+    @Getter
+    private Long id;
+    @Setter
+    @Getter
+    private String fileName;
+    @Setter
+    @Getter
+    private String summary;
+    @Setter
+    @Getter
+    private Instant createdAt;
+    @Setter
+    @Getter
+    private String bucket;
+    @Setter
+    @Getter
+    private String objectKey;
+
+    public DocumentUploadedEvent() {}
+
+    public DocumentUploadedEvent(
+            Long id,
+            String fileName,
+            String summary,
+            Instant createdAt,
+            String bucket,
+            String objectKey
+    ) {
+        this.id = id;
+        this.fileName = fileName;
+        this.summary = summary;
+        this.createdAt = createdAt;
+        this.bucket = bucket;
+        this.objectKey = objectKey;
+    }
+
+    @Override
+    public String toString() {
+        return "DocumentUploadedEvent{" +
+                "id=" + id +
+                ", filename=" + fileName +
+                ", summary=" + summary +
+                ", createdAt=" + createdAt +
+                ", bucket='" + bucket + '\'' +
+                ", objectKey='" + objectKey + '\'' +
+                '}';
+    }
+}

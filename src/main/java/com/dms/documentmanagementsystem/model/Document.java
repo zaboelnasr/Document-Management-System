@@ -20,6 +20,11 @@ public class Document {
     private String fileName;
     private String summary;
 
+    private String bucket;
+    private String objectKey;
+    private String contentType;
+    private Long size;
+
     @Lob
     private byte[] content;  // store file bytes for now
 
