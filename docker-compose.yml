@@ -44,13 +44,24 @@ services:
       SPRING_DATASOURCE_PASSWORD: postgres
       SPRING_RABBITMQ_HOST: rabbitmq
       SPRING_RABBITMQ_PORT: 5672
+
       DMS_RMQ_EXCHANGE: dms.exchange
       DMS_RMQ_ROUTING_UPLOAD: dms.document.uploaded
       DMS_RMQ_QUEUE_UPLOAD: dms.document.uploaded
+
+      S3_ENDPOINT: http://minio:9000
+      S3_REGION: us-east-1
+      S3_ACCESS_KEY: ${MINIO_ROOT_USER:-minio}
+      S3_SECRET_KEY: ${MINIO_ROOT_PASSWORD:-minio123}
+      S3_BUCKET: documents
+      S3_PATH_STYLE: "true"
+      SPRING_PROFILES_ACTIVE: docker
     depends_on:
       db:
         condition: service_healthy
       rabbitmq:
+        condition: service_healthy
+      minio:
         condition: service_healthy
     healthcheck:
       test: ["CMD-SHELL", "curl -fsS -o /dev/null http://localhost:8080/actuator/health/readiness"]
