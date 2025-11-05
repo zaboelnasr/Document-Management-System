@@ -1,10 +1,12 @@
 package com.dms.documentmanagementsystem.service;
 
+import com.dms.documentmanagementsystem.mapper.DocumentMapper;
 import com.dms.documentmanagementsystem.model.Document;
 import com.dms.documentmanagementsystem.repository.DocumentRepository;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import software.amazon.awssdk.services.s3.S3Client;
 
 import java.util.NoSuchElementException;
 import java.util.Optional;
@@ -18,9 +20,11 @@ class DocumentServiceTest {
     @Test
     void create_savesDocument() {
         // Arrange
+        S3Client s3 = Mockito.mock(S3Client.class);
         DocumentRepository repo = Mockito.mock(DocumentRepository.class);
+        DocumentMapper mapper = Mockito.mock(DocumentMapper.class);
         RabbitTemplate rabbitTemplate = Mockito.mock(RabbitTemplate.class);
-        DocumentService service = new DocumentService(repo, rabbitTemplate);
+        DocumentService service = new DocumentService(s3, repo, mapper, rabbitTemplate);
 
         Document toSave = new Document();
         toSave.setFileName("a.pdf");
@@ -42,9 +46,11 @@ class DocumentServiceTest {
 
     @Test
     void getById_notFound_throws() {
+        S3Client s3 = Mockito.mock(S3Client.class);
         DocumentRepository repo = Mockito.mock(DocumentRepository.class);
+        DocumentMapper mapper = Mockito.mock(DocumentMapper.class);
         RabbitTemplate rabbitTemplate = Mockito.mock(RabbitTemplate.class);
-        DocumentService service = new DocumentService(repo, rabbitTemplate);
+        DocumentService service = new DocumentService(s3, repo, mapper, rabbitTemplate);
 
         when(repo.findById(999L)).thenReturn(Optional.empty());
 
@@ -53,9 +59,11 @@ class DocumentServiceTest {
 
     @Test
     void update_updatesFields() {
+        S3Client s3 = Mockito.mock(S3Client.class);
         DocumentRepository repo = Mockito.mock(DocumentRepository.class);
+        DocumentMapper mapper = Mockito.mock(DocumentMapper.class);
         RabbitTemplate rabbitTemplate = Mockito.mock(RabbitTemplate.class);
-        DocumentService service = new DocumentService(repo, rabbitTemplate);
+        DocumentService service = new DocumentService(s3, repo, mapper, rabbitTemplate);
 
         Document existing = new Document();
         existing.setId(5L);
@@ -78,9 +86,11 @@ class DocumentServiceTest {
 
     @Test
     void delete_notFound_throws() {
+        S3Client s3 = Mockito.mock(S3Client.class);
         DocumentRepository repo = Mockito.mock(DocumentRepository.class);
+        DocumentMapper mapper = Mockito.mock(DocumentMapper.class);
         RabbitTemplate rabbitTemplate = Mockito.mock(RabbitTemplate.class);
-        DocumentService service = new DocumentService(repo, rabbitTemplate);
+        DocumentService service = new DocumentService(s3, repo, mapper, rabbitTemplate);
 
         when(repo.existsById(42L)).thenReturn(false);
 
