@@ -6,7 +6,7 @@ COPY src ./src
 RUN mvn -q -DskipTests package
 
 # ---- runtime stage ----
-FROM openjdk:21-jdk-slim
+FROM eclipse-temurin:21-jdk-jammy
 WORKDIR /app
 
 # curl für docker-compose Healthcheck
