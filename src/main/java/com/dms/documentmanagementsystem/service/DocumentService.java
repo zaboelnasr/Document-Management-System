@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
@@ -111,11 +112,34 @@ public class DocumentService {
     }
 
     public void delete(Long id) {
-        if (!repo.existsById(id)) {
-            throw new NotFoundException("Document " + id + " not found");
+        // fetch the doc to get bucket + objectKey
+        Document doc = repo.findById(id)
+                .orElseThrow(() -> new NotFoundException("Document " + id + " not found"));
+
+        // 1) delete the object from S3/MinIO
+        if (doc.getBucket() != null && doc.getObjectKey() != null) {
+            try {
+                s3.deleteObject(DeleteObjectRequest.builder()
+                        .bucket(doc.getBucket())
+                        .key(doc.getObjectKey())
+                        .build());
+                log.info("Deleted S3 object bucket={}, key={}", doc.getBucket(), doc.getObjectKey());
+            } catch (Exception e) {
+                // choose one behavior:
+                // a) fail the whole operation (strict consistency):
+                // throw new ServiceException("Failed to delete S3 object", e);
+
+                // b) log and continue (eventual cleanup acceptable in dev):
+                log.warn("Failed to delete S3 object (bucket={}, key={}): {}",
+                        doc.getBucket(), doc.getObjectKey(), e.toString());
+            }
+        } else {
+            log.warn("Document {} has no bucket/objectKey, skipping S3 delete", id);
         }
+
+        // 2) delete DB record
         repo.deleteById(id);
-        log.info("Document deleted: id={}", id);
+        log.info("Deleted document id={}", id);
     }
 
     public Document getById(Long id) {
