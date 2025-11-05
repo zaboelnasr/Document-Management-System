@@ -117,3 +117,6 @@ services:
 
 volumes:
   db_data:
+  minio_data:
+  pg_data:
+  rabbitmq_data:
