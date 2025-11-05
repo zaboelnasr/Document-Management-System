@@ -12,12 +12,10 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
-import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
+
+import software.amazon.awssdk.services.s3.S3Client;
+
 import java.io.IOException;
 import java.time.LocalDateTime;
 
@@ -25,8 +23,12 @@ import java.time.LocalDateTime;
 public class DocumentService {
     private static final Logger log = LoggerFactory.getLogger(DocumentService.class);
 
+    private final S3Client s3;
     private final DocumentRepository repo;
     private final RabbitTemplate rabbitTemplate;
+
+    @Value("${s3.bucket}")
+    private String bucket;
 
     @Value("${dms.rmq.exchange}")
     private String exchange;
@@ -34,37 +36,41 @@ public class DocumentService {
     @Value("${dms.rmq.routing.upload}")
     private String uploadRoutingKey;
 
-    public DocumentService(DocumentRepository repo, RabbitTemplate rabbitTemplate) {
+    public DocumentService(S3Client s3, DocumentRepository repo, RabbitTemplate rabbitTemplate) {
+        this.s3 = s3;
         this.repo = repo;
         this.rabbitTemplate = rabbitTemplate;
     }
 
-    // ✅ NEW: handle file upload
     public Document handleFileUpload(MultipartFile file, String summary) {
         try {
-            // 1️⃣ Create uploads directory if not exists
-            Path uploadDir = Paths.get("uploads");
-            if (!Files.exists(uploadDir)) {
-                Files.createDirectories(uploadDir);
-            }
+            String cleanName = org.springframework.util.StringUtils.cleanPath(file.getOriginalFilename());
+            if (cleanName == null || cleanName.isBlank()) cleanName = "upload.pdf";
+            String objectKey = java.util.UUID.randomUUID() + "-" + cleanName;
 
-            // 2️⃣ Clean file name and save file
-            String fileName = StringUtils.cleanPath(file.getOriginalFilename());
-            Path filePath = uploadDir.resolve(fileName);
-            Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
+            s3.putObject(
+                    software.amazon.awssdk.services.s3.model.PutObjectRequest.builder()
+                            .bucket(bucket)
+                            .key(objectKey)
+                            .contentType(file.getContentType())
+                            .build(),
+                    software.amazon.awssdk.core.sync.RequestBody.fromBytes(file.getBytes())
+            );
 
-            // 3️⃣ Save document metadata in DB
-            Document document = new Document();
-            document.setFileName(fileName);
-            document.setSummary(summary);
-            document.setCreatedAt(LocalDateTime.now());
+            Document toSave = new Document();
+            toSave.setFileName(cleanName);
+            toSave.setSummary(summary);
+            toSave.setCreatedAt(LocalDateTime.now());
+            toSave.setBucket(bucket);
+            toSave.setObjectKey(objectKey);
+            toSave.setContentType(file.getContentType());
+            toSave.setSize(file.getSize());
 
-            Document saved = repo.save(document);
+            Document saved = repo.save(toSave);
             log.info("Uploaded and saved document: id={}, fileName={}", saved.getId(), saved.getFileName());
 
-            // 4️⃣ Publish RabbitMQ event for OCR
             DocumentUploadedEvent event = new DocumentUploadedEvent(
-                    saved.getId(), saved.getFileName(), saved.getSummary(), saved.getCreatedAt());
+                    saved.getId(), saved.getFileName(), saved.getSummary(), saved.getCreatedAt(), saved.getBucket(), saved.getObjectKey());
             rabbitTemplate.convertAndSend(exchange, uploadRoutingKey, event);
             log.info("Published DocumentUploadedEvent for id={} to exchange='{}'", saved.getId(), exchange);
 
@@ -81,9 +87,8 @@ public class DocumentService {
             Document saved = repo.save(doc);
             log.info("Document created: id={}, fileName={}", saved.getId(), saved.getFileName());
 
-            // Publish event to RabbitMQ
             DocumentUploadedEvent event = new DocumentUploadedEvent(
-                    saved.getId(), saved.getFileName(), saved.getSummary(), saved.getCreatedAt());
+                    saved.getId(), saved.getFileName(), saved.getSummary(), saved.getCreatedAt(), saved.getBucket(), saved.getObjectKey());
             rabbitTemplate.convertAndSend(exchange, uploadRoutingKey, event);
             log.info("Published DocumentUploadedEvent for id={} to exchange='{}' with key='{}'",
                     saved.getId(), exchange, uploadRoutingKey);
