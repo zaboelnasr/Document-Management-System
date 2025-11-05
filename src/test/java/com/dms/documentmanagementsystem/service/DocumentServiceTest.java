@@ -1,29 +1,35 @@
 package com.dms.documentmanagementsystem.service;
 
-import com.dms.documentmanagementsystem.mapper.DocumentMapper;
+import com.dms.documentmanagementsystem.exception.NotFoundException;
+import com.dms.documentmanagementsystem.messaging.DocumentUploadedEvent;
 import com.dms.documentmanagementsystem.model.Document;
 import com.dms.documentmanagementsystem.repository.DocumentRepository;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.springframework.test.util.ReflectionTestUtils;
 import software.amazon.awssdk.services.s3.S3Client;
 
-import java.util.NoSuchElementException;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 class DocumentServiceTest {
 
     @Test
-    void create_savesDocument() {
+    void create_savesDocument_andPublishesEvent() {
         // Arrange
         S3Client s3 = Mockito.mock(S3Client.class);
         DocumentRepository repo = Mockito.mock(DocumentRepository.class);
         RabbitTemplate rabbitTemplate = Mockito.mock(RabbitTemplate.class);
+
         DocumentService service = new DocumentService(s3, repo, rabbitTemplate);
+
+        // Inject values normally provided by @Value in production
+        ReflectionTestUtils.setField(service, "exchange", "dms.exchange");
+        ReflectionTestUtils.setField(service, "uploadRoutingKey", "dms.document.uploaded");
 
         Document toSave = new Document();
         toSave.setFileName("a.pdf");
@@ -40,11 +46,15 @@ class DocumentServiceTest {
         // Assert
         assertEquals(1L, result.getId());
         verify(repo).save(any(Document.class));
-        verify(rabbitTemplate).convertAndSend(anyString(), anyString(), Optional.ofNullable(any()));
+        verify(rabbitTemplate).convertAndSend(
+                eq("dms.exchange"),
+                eq("dms.document.uploaded"),
+                any(DocumentUploadedEvent.class)
+        );
     }
 
     @Test
-    void getById_notFound_throws() {
+    void getById_notFound_throwsNotFoundException() {
         S3Client s3 = Mockito.mock(S3Client.class);
         DocumentRepository repo = Mockito.mock(DocumentRepository.class);
         RabbitTemplate rabbitTemplate = Mockito.mock(RabbitTemplate.class);
@@ -52,7 +62,7 @@ class DocumentServiceTest {
 
         when(repo.findById(999L)).thenReturn(Optional.empty());
 
-        assertThrows(NoSuchElementException.class, () -> service.getById(999L));
+        assertThrows(NotFoundException.class, () -> service.getById(999L));
     }
 
     @Test
@@ -82,7 +92,7 @@ class DocumentServiceTest {
     }
 
     @Test
-    void delete_notFound_throws() {
+    void delete_notFound_throwsNotFoundException() {
         S3Client s3 = Mockito.mock(S3Client.class);
         DocumentRepository repo = Mockito.mock(DocumentRepository.class);
         RabbitTemplate rabbitTemplate = Mockito.mock(RabbitTemplate.class);
@@ -90,7 +100,7 @@ class DocumentServiceTest {
 
         when(repo.existsById(42L)).thenReturn(false);
 
-        assertThrows(NoSuchElementException.class, () -> service.delete(42L));
+        assertThrows(NotFoundException.class, () -> service.delete(42L));
         verify(repo, never()).deleteById(anyLong());
     }
 }
