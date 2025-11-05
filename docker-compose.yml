@@ -71,6 +71,25 @@ services:
       backend:
         condition: service_healthy
 
+  minio:
+    image: minio/minio:RELEASE.2024-11-07T00-00-00Z
+    container_name: dms-minio
+    command: server /data --console-address ":9001"
+    restart: always
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minio}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minio123}
+    ports:
+      - "9000:9000"   # S3 API
+      - "9001:9001"   # Admin Console
+    volumes:
+      - minio_data:/data
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:9000/minio/health/live" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
   ocr-worker:
     build:
       context: ./ocr-worker
@@ -83,8 +102,17 @@ services:
       DMS_RMQ_EXCHANGE: dms.exchange
       DMS_RMQ_ROUTING_UPLOAD: dms.document.uploaded
       DMS_RMQ_QUEUE_UPLOAD: dms.document.uploaded
+      S3_ENDPOINT: http://minio:9000
+      S3_ACCESS_KEY: ${MINIO_ROOT_USER:-minio}
+      S3_SECRET_KEY: ${MINIO_ROOT_PASSWORD:-minio123}
+      S3_BUCKET: documents
+      S3_REGION: us-east-1
+      S3_PATH_STYLE: "true"
+      SPRING_PROFILES_ACTIVE: docker
     depends_on:
       rabbitmq:
+        condition: service_healthy
+      minio:
         condition: service_healthy
 
 volumes:
