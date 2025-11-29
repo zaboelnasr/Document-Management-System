@@ -1,9 +1,11 @@
 package com.dms.ocr.listener;
 
+import com.dms.ocr.backend.BackendClient;
 import com.dms.ocr.event.DocumentUploadedEvent;
+import com.dms.ocr.genai.GenAiClient;
+import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import lombok.RequiredArgsConstructor;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -24,11 +26,13 @@ public class OcrListener {
     private static final Logger log = LoggerFactory.getLogger(OcrListener.class);
 
     private final S3Client s3;
+    private final GenAiClient genAiClient;
+    private final BackendClient backendClient;
 
     @Value("${s3.bucket}")
     private String defaultBucket;
 
-    // 👇 reads queue name from your existing worker application.yml
+    // reads queue name from your existing worker application.yml
     @RabbitListener(queues = "${dms.rmq.queue.upload}")
     public void onMessage(DocumentUploadedEvent event) throws Exception {
         String bucket = Optional.ofNullable(getSafe(event.getBucket(), defaultBucket)).orElse(defaultBucket);
@@ -78,6 +82,28 @@ public class OcrListener {
         String text = all.toString().trim();
         log.info("OCR result for document id={} (bucket={}, key={}):\n{}",
                 event.getId(), bucket, key, text.isEmpty() ? "<no text detected>" : text);
+
+
+
+        if (text.isEmpty()) {
+            log.warn("No text detected for document id={}, skipping summarization", event.getId());
+            return;
+        }
+
+        String summary;
+        try {
+            summary = genAiClient.getSummary(text);
+        } catch (Exception e) {
+            log.error("Failed to generate summary for document id={}", event.getId(), e);
+            // Dokument existiert trotzdem, nur ohne summary
+            return;
+        }
+
+        try {
+            backendClient.updateSummary(event.getId(), summary);
+        } catch (Exception e) {
+            log.error("Failed to update backend with summary for document id={}", event.getId(), e);
+        }
     }
 
     private static String getSafe(String value, String fallback) {

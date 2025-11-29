@@ -147,6 +147,27 @@ public class DocumentService {
                 .orElseThrow(() -> new NotFoundException("Document " + id + " not found"));
     }
 
+    public Document updateSummary(Long id, String summary) {
+        Document existing = repo.findById(id)
+                .orElseThrow(() -> new NotFoundException("Document " + id + " not found"));
+
+        if (summary != null && summary.length() > 255) {
+            // damit die DB nicht explodiert
+            String shortened = summary.substring(0, 255);
+            log.warn("Summary too long ({} chars), truncating to 255 characters for document id={}",
+                    summary.length(), id);
+            existing.setSummary(shortened);
+        } else {
+            existing.setSummary(summary);
+        }
+
+        Document updated = repo.save(existing);
+        log.info("Summary updated for document id={}", updated.getId());
+        return updated;
+    }
+
+
+
     public Page<Document> getAll(Pageable pageable) {
         return repo.findAll(pageable);
     }

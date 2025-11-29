@@ -122,11 +122,28 @@ services:
       S3_REGION: us-east-1
       S3_PATH_STYLE: "true"
       SPRING_PROFILES_ACTIVE: docker
+
+      # HIER schon vorbereiten, brauchen wir später im Code:
+      GENAI_WORKER_URL: http://genai-worker:8090/api/genai/summarize
+      BACKEND_BASE_URL: http://backend:8080
     depends_on:
       rabbitmq:
         condition: service_healthy
       minio:
         condition: service_healthy
+      genai-worker:
+        condition: service_started
+
+  genai-worker:
+    build:
+      context: ./genai-worker
+      dockerfile: Dockerfile
+    container_name: genai-worker
+    restart: always
+    ports:
+      - "8090:8090"
+    environment:
+      GEMINI_API_KEY: ${GEMINI_API_KEY}
 
 volumes:
   db_data:
