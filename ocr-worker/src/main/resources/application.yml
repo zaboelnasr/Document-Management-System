@@ -22,3 +22,6 @@ s3:
   region: ${S3_REGION:us-east-1}
   bucket: ${S3_BUCKET:documents}
   pathStyleAccess: true
+
+backend:
+  base-url: http://host.docker.internal:8080

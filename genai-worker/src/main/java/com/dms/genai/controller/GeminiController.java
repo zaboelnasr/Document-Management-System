@@ -17,35 +17,23 @@ public class GeminiController {
 
     @PostMapping("/summarize")
     public ResponseEntity<String> summarize(@RequestBody SummaryRequest req) {
-
-        String text = req.getText();
-        log.info("GenAI request received, textLength={}",
-                text != null ? text.length() : 0);
+        String text = req != null ? req.getText() : null;
+        log.info("GenAI request received, textLength={}", text != null ? text.length() : 0);
 
         if (text == null || text.isBlank()) {
             return ResponseEntity.badRequest().body("text must not be empty");
         }
 
         try {
-            // ⬇️ Unser Service liefert NUR den reinen Summary-Text zurück
             String summary = geminiService.summarize(text);
-
-            // Sicherheit: falls Gemini zurückgibt was länger ist
-            if (summary.length() > 255) {
-                log.warn("Summary length {} truncated to 255 chars", summary.length());
-                summary = summary.substring(0, 255);
-            }
-
+            // ⚠️ WICHTIG: wir geben NUR den reinen Text zurück
             return ResponseEntity.ok(summary);
-
         } catch (IllegalStateException e) {
-            log.error("Configuration error in GenAI worker", e);
-            return ResponseEntity.status(500)
-                    .body("GenAI worker misconfigured: " + e.getMessage());
+            log.error("Configuration or Gemini error", e);
+            return ResponseEntity.status(502).body("Summary generation failed: " + e.getMessage());
         } catch (Exception e) {
-            log.error("Error during summarization", e);
-            return ResponseEntity.status(502)
-                    .body("Summary generation failed");
+            log.error("Unexpected error during summarization", e);
+            return ResponseEntity.status(502).body("Summary generation failed");
         }
     }
 }

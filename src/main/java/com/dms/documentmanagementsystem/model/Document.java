@@ -18,6 +18,8 @@ public class Document {
     private Long id;
 
     private String fileName;
+
+    @Column(columnDefinition = "TEXT")
     private String summary;
 
     private String bucket;

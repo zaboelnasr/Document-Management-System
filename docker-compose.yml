@@ -125,7 +125,7 @@ services:
 
       # HIER schon vorbereiten, brauchen wir später im Code:
       GENAI_WORKER_URL: http://genai-worker:8090/api/genai/summarize
-      BACKEND_BASE_URL: http://backend:8080
+      #BACKEND_BASE_URL: http://backend:8080
     depends_on:
       rabbitmq:
         condition: service_healthy

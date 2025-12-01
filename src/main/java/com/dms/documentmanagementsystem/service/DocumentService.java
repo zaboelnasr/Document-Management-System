@@ -151,10 +151,10 @@ public class DocumentService {
         Document existing = repo.findById(id)
                 .orElseThrow(() -> new NotFoundException("Document " + id + " not found"));
 
-        if (summary != null && summary.length() > 255) {
+        if (summary != null && summary.length() > 2000) {
             // damit die DB nicht explodiert
-            String shortened = summary.substring(0, 255);
-            log.warn("Summary too long ({} chars), truncating to 255 characters for document id={}",
+            String shortened = summary.substring(0, 2000);
+            log.warn("Summary too long ({} chars), truncating to 2000 characters for document id={}",
                     summary.length(), id);
             existing.setSummary(shortened);
         } else {
