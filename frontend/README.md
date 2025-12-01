@@ -6,7 +6,7 @@ First, make sure you have docker running!
 
 To start a local development servery follow these steps:
 ```bash
-docker compose up -d db rabbitmq minio ocr-worker
+docker compose up -d db rabbitmq minio ocr-worker genai-worker
 ```
 then run the ../src/main/java/com.dms.documentmanagementsystem/DocumentManagementSystemApplication.java application simply by pressing the green play button.
 ```bash

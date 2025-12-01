@@ -4,18 +4,19 @@
                              https://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
+    <!-- Gleiche GroupId wie beim ocr-worker -->
     <groupId>com.dms</groupId>
-    <artifactId>ocr-worker</artifactId>
+    <artifactId>genai-worker</artifactId>
     <version>0.0.1-SNAPSHOT</version>
-    <name>ocr-worker</name>
+    <name>genai-worker</name>
 
     <properties>
         <java.version>21</java.version>
         <spring.boot.version>3.3.3</spring.boot.version>
-        <aws.sdk.version>2.25.66</aws.sdk.version>
         <lombok.version>1.18.34</lombok.version>
     </properties>
 
+    <!-- Gleiches Spring Boot Dependency-Management wie beim ocr-worker -->
     <dependencyManagement>
         <dependencies>
             <dependency>
@@ -29,34 +30,25 @@
     </dependencyManagement>
 
     <dependencies>
+        <!-- Basis Spring Boot Starter (inkl. Logging etc.) -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter</artifactId>
         </dependency>
+
+        <!-- Web, damit wir einen REST-Endpunkt /api/genai/summarize anbieten können -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-amqp</artifactId>
+            <artifactId>spring-boot-starter-web</artifactId>
         </dependency>
+
+        <!-- Jackson (JSON) – ist eh schon im Web-Starter drin, aber explizit schadet nicht -->
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-databind</artifactId>
         </dependency>
-        <dependency>
-            <groupId>com.fasterxml.jackson.datatype</groupId>
-            <artifactId>jackson-datatype-jsr310</artifactId>
-        </dependency>
 
-        <dependency>
-            <groupId>software.amazon.awssdk</groupId>
-            <artifactId>s3</artifactId>
-            <version>${aws.sdk.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>software.amazon.awssdk</groupId>
-            <artifactId>apache-client</artifactId>
-            <version>${aws.sdk.version}</version>
-        </dependency>
-
+        <!-- Lombok, wie im ocr-worker -->
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
@@ -64,16 +56,18 @@
             <scope>provided</scope>
         </dependency>
 
+        <!-- Tests (optional, aber Standard bei Spring Boot) -->
         <dependency>
-            <groupId>org.springframework</groupId>
-            <artifactId>spring-web</artifactId>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
         </dependency>
-
     </dependencies>
 
     <build>
         <plugins>
 
+            <!-- Gleiches Compiler-Setup wie beim ocr-worker -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
@@ -91,6 +85,7 @@
                 </configuration>
             </plugin>
 
+            <!-- Spring Boot repackage, wie beim ocr-worker -->
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
@@ -106,6 +101,7 @@
         </plugins>
     </build>
 
+    <!-- gleiche Repositories wie beim ocr-worker -->
     <repositories>
         <repository>
             <id>spring-releases</id>
