@@ -1,3 +1,15 @@
 package com.dms.indexing;
 
-public record DocumentSearchResult(String id, String fileName) {}
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+public class DocumentSearchResult {
+    private Long id;
+    private String fileName;
+    private String content;
+    private String summary;
+}

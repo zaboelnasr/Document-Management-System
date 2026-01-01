@@ -70,9 +70,6 @@ export class DashboardComponent implements OnInit {
     this.loadDocuments();
   }
 
-  onFileSelected(event: any): void {
-    this.selectedFile = event.target.files[0];
-  }
   // Handle file selection
   onFileSelected(event: any): void {
     this.selectedFile = event.target.files[0];

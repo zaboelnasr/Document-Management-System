@@ -1,27 +1,34 @@
 spring:
   application:
-    name: ocr-worker
+    name: indexing-worker
   rabbitmq:
     host: rabbitmq
     port: 5672
     username: guest
     password: guest
 
+# Define the queues/exchanges that this worker listens to
 dms:
   rmq:
     exchange: dms.exchange
     queue:
-      upload: dms.document.uploaded
+      index: dms.document.index
     routing:
-      upload: dms.document.uploaded
+      index: dms.document.index
 
+# Elasticsearch configuration (for Sprint 6)
+elasticsearch:
+  url: http://elasticsearch:9200
+
+# S3 if worker still downloads text files for indexing
 s3:
-  endpoint: ${S3_ENDPOINT:http://localhost:9000}
+  endpoint: ${S3_ENDPOINT:http://minio:9000}
   accessKey: ${S3_ACCESS_KEY:minio}
   secretKey: ${S3_SECRET_KEY:minio123}
   region: ${S3_REGION:us-east-1}
   bucket: ${S3_BUCKET:documents}
   pathStyleAccess: true
 
+# for debugging or backend callback
 backend:
-  base-url: http://host.docker.internal:8080
+  base-url: http://dms-backend:8080
