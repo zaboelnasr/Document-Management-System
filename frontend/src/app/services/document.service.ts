@@ -70,4 +70,10 @@ export class DocumentService {
   deleteDocument(id: number): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/${id}`);
   }
+  //Search a document
+  searchDocuments(term: string): Observable<DocumentDto[]> {
+    return this.http.get<DocumentDto[]>(
+      `${this.apiUrl}/search?term=${encodeURIComponent(term)}`
+    );
+  }
 }

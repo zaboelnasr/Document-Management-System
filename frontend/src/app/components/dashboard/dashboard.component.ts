@@ -22,6 +22,8 @@ export class DashboardComponent implements OnInit {
   selectedFile: File | null = null;
   loading = false;
   errorMsg = '';
+  searchTerm = '';
+
 
   constructor(private docService: DocumentService) {}
 
@@ -47,7 +49,30 @@ export class DashboardComponent implements OnInit {
         }
       });
   }
+ //Search a document
+  searchDocuments(): void {
+    if (!this.searchTerm.trim()) {
+      this.loadDocuments();
+      return;
+    }
 
+    this.loading = true;
+    this.docService.searchDocuments(this.searchTerm)
+      .pipe(finalize(() => (this.loading = false)))
+      .subscribe({
+        next: (results) => (this.documents = results),
+        error: (err) => (this.errorMsg = 'Search failed: ' + err.message)
+      });
+  }
+
+  clearSearch(): void {
+    this.searchTerm = '';
+    this.loadDocuments();
+  }
+
+  onFileSelected(event: any): void {
+    this.selectedFile = event.target.files[0];
+  }
   // Handle file selection
   onFileSelected(event: any): void {
     this.selectedFile = event.target.files[0];

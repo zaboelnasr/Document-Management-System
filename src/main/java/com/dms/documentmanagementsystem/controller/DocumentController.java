@@ -5,6 +5,8 @@ import com.dms.documentmanagementsystem.dto.DocumentResponseDTO;
 import com.dms.documentmanagementsystem.mapper.DocumentMapper;
 import com.dms.documentmanagementsystem.model.Document;
 import com.dms.documentmanagementsystem.service.DocumentService;
+import com.dms.indexing.DocumentSearchResult;
+import com.dms.indexing.service.SearchService;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -13,6 +15,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.net.URI;
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -20,9 +23,10 @@ import java.util.Map;
 public class DocumentController {
 
     private final DocumentService service;
-
-    public DocumentController(DocumentService service) {
+    private final SearchService searchService;
+    public DocumentController(DocumentService service, SearchService searchService) {
         this.service = service;
+        this.searchService = searchService;
     }
 
     // ----------------------------------------------------
@@ -102,4 +106,11 @@ public class DocumentController {
         service.updateSummary(id, summary);
         return ResponseEntity.noContent().build(); // 204
     }
+
+    // PATCH /api/documents/{id}/summary   -- Sprint 6
+    @GetMapping("/search")
+    public ResponseEntity<List<DocumentSearchResult>> search(@RequestParam String term) {
+        return ResponseEntity.ok(searchService.search(term));
+    }
+
 }
