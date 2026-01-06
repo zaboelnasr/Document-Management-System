@@ -16,6 +16,10 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class RabbitMQConfig {
 
+    /* =======================
+       Properties
+       ======================= */
+
     @Value("${dms.rmq.exchange}")
     private String exchangeName;
 
@@ -25,20 +29,65 @@ public class RabbitMQConfig {
     @Value("${dms.rmq.routing.upload}")
     private String uploadRoutingKey;
 
+    @Value("${dms.rmq.queue.index}")
+    private String indexQueueName;
+
+    @Value("${dms.rmq.routing.index}")
+    private String indexRoutingKey;
+
+    /* =======================
+       Exchange
+       ======================= */
+
     @Bean
     public TopicExchange dmsExchange() {
-        return ExchangeBuilder.topicExchange(exchangeName).durable(true).build();
+        return ExchangeBuilder
+                .topicExchange(exchangeName)
+                .durable(true)
+                .build();
     }
+
+    /* =======================
+       Upload Queue
+       ======================= */
 
     @Bean
     public Queue uploadQueue() {
-        return QueueBuilder.durable(uploadQueueName).build();
+        return QueueBuilder
+                .durable(uploadQueueName)
+                .build();
     }
 
     @Bean
     public Binding uploadBinding() {
-        return BindingBuilder.bind(uploadQueue()).to(dmsExchange()).with(uploadRoutingKey);
+        return BindingBuilder
+                .bind(uploadQueue())
+                .to(dmsExchange())
+                .with(uploadRoutingKey);
     }
+
+    /* =======================
+       Index Queue
+       ======================= */
+
+    @Bean
+    public Queue indexQueue() {
+        return QueueBuilder
+                .durable(indexQueueName)
+                .build();
+    }
+
+    @Bean
+    public Binding indexBinding() {
+        return BindingBuilder
+                .bind(indexQueue())
+                .to(dmsExchange())
+                .with(indexRoutingKey);
+    }
+
+    /* =======================
+       Rabbit Template
+       ======================= */
 
     @Bean
     public Jackson2JsonMessageConverter jackson2JsonMessageConverter() {
@@ -46,8 +95,10 @@ public class RabbitMQConfig {
     }
 
     @Bean
-    public RabbitTemplate rabbitTemplate(ConnectionFactory connectionFactory,
-                                         Jackson2JsonMessageConverter converter) {
+    public RabbitTemplate rabbitTemplate(
+            ConnectionFactory connectionFactory,
+            Jackson2JsonMessageConverter converter) {
+
         RabbitTemplate template = new RabbitTemplate(connectionFactory);
         template.setMessageConverter(converter);
         return template;

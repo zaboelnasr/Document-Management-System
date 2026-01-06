@@ -1,6 +1,11 @@
 spring:
   application:
     name: Document-Management-System
+  rabbitmq:
+    host: rabbitmq
+    port: 5672
+    username: guest
+    password: guest
 
   servlet:
     multipart:
