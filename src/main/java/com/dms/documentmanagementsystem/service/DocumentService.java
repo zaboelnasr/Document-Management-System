@@ -1,32 +1,42 @@
 package com.dms.documentmanagementsystem.service;
 
+import com.dms.documentmanagementsystem.dto.DocumentSearchResultDTO;
 import com.dms.documentmanagementsystem.exception.NotFoundException;
 import com.dms.documentmanagementsystem.exception.ServiceException;
 import com.dms.documentmanagementsystem.messaging.DocumentUploadedEvent;
 import com.dms.documentmanagementsystem.model.Document;
 import com.dms.documentmanagementsystem.repository.DocumentRepository;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
-
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
+import software.amazon.awssdk.services.s3.model.PutObjectRequest;
+import software.amazon.awssdk.core.sync.RequestBody;
+import co.elastic.clients.elasticsearch.ElasticsearchClient;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
+import java.util.Optional;
+import java.util.UUID;
 
 @Service
+@RequiredArgsConstructor
+@Slf4j
 public class DocumentService {
-    private static final Logger log = LoggerFactory.getLogger(DocumentService.class);
 
     private final S3Client s3;
     private final DocumentRepository repo;
     private final RabbitTemplate rabbitTemplate;
+    private final ElasticsearchClient elasticsearchClient;
 
     @Value("${s3.bucket}")
     private String bucket;
@@ -37,109 +47,100 @@ public class DocumentService {
     @Value("${dms.rmq.routing.upload}")
     private String uploadRoutingKey;
 
-    public DocumentService(S3Client s3, DocumentRepository repo, RabbitTemplate rabbitTemplate) {
-        this.s3 = s3;
-        this.repo = repo;
-        this.rabbitTemplate = rabbitTemplate;
-    }
-
+    // ----------------------------------------------------
+    // Upload + index (Option B — CORRECT)
+    // ----------------------------------------------------
     public Document handleFileUpload(MultipartFile file, String summary) {
         try {
-            String cleanName = org.springframework.util.StringUtils.cleanPath(file.getOriginalFilename());
-            if (cleanName == null || cleanName.isBlank()) cleanName = "upload.pdf";
-            String objectKey = java.util.UUID.randomUUID() + "-" + cleanName;
+            String cleanName = file.getOriginalFilename();
+            if (cleanName == null || cleanName.isBlank()) {
+                cleanName = "upload.pdf";
+            }
 
+            String objectKey = UUID.randomUUID() + "-" + cleanName;
+
+            // 1️⃣ Upload to S3 / MinIO
             s3.putObject(
-                    software.amazon.awssdk.services.s3.model.PutObjectRequest.builder()
+                    PutObjectRequest.builder()
                             .bucket(bucket)
                             .key(objectKey)
                             .contentType(file.getContentType())
                             .build(),
-                    software.amazon.awssdk.core.sync.RequestBody.fromBytes(file.getBytes())
+                    RequestBody.fromBytes(file.getBytes())
             );
 
-            Document toSave = new Document();
-            toSave.setFileName(cleanName);
-            toSave.setSummary(summary);
-            toSave.setCreatedAt(LocalDateTime.now());
-            toSave.setBucket(bucket);
-            toSave.setObjectKey(objectKey);
-            toSave.setContentType(file.getContentType());
-            toSave.setSize(file.getSize());
+            // 2️⃣ Save DB
+            Document doc = new Document();
+            doc.setFileName(cleanName);
+            doc.setSummary(summary);
+            doc.setBucket(bucket);
+            doc.setObjectKey(objectKey);
+            doc.setContentType(file.getContentType());
+            doc.setSize(file.getSize());
+            doc.setCreatedAt(LocalDateTime.now());
 
-            Document saved = repo.save(toSave);
-            log.info("Uploaded and saved document: id={}, fileName={}", saved.getId(), saved.getFileName());
-
-            DocumentUploadedEvent event = new DocumentUploadedEvent(
-                    saved.getId(), saved.getFileName(), saved.getSummary(), saved.getCreatedAt(), saved.getBucket(), saved.getObjectKey());
-            rabbitTemplate.convertAndSend(exchange, uploadRoutingKey, event);
-            log.info("Published DocumentUploadedEvent for id={} to exchange='{}'", saved.getId(), exchange);
-
-            return saved;
-
-        } catch (IOException ex) {
-            log.error("Failed to upload file", ex);
-            throw new ServiceException("File upload failed", ex);
-        }
-    }
-
-    public Document create(Document doc) {
-        try {
             Document saved = repo.save(doc);
-            log.info("Document created: id={}, fileName={}", saved.getId(), saved.getFileName());
+            log.info("Uploaded and saved document id={}", saved.getId());
 
+            // 3️⃣ INDEX IMMEDIATELY ✅
+            indexDocument(saved);
+
+            // 4️⃣ Publish event (OCR etc.)
             DocumentUploadedEvent event = new DocumentUploadedEvent(
-                    saved.getId(), saved.getFileName(), saved.getSummary(), saved.getCreatedAt(), saved.getBucket(), saved.getObjectKey());
+                    saved.getId(),
+                    saved.getFileName(),
+                    saved.getSummary(),
+                    saved.getCreatedAt(),
+                    saved.getBucket(),
+                    saved.getObjectKey()
+            );
+
             rabbitTemplate.convertAndSend(exchange, uploadRoutingKey, event);
-            log.info("Published DocumentUploadedEvent for id={} to exchange='{}' with key='{}'",
-                    saved.getId(), exchange, uploadRoutingKey);
+            log.info("Published DocumentUploadedEvent for id={}", saved.getId());
 
             return saved;
-        } catch (Exception ex) {
-            log.error("Failed to create document or publish event", ex);
-            throw new ServiceException("Failed to create document", ex);
+
+        } catch (IOException e) {
+            log.error("File upload failed", e);
+            throw new ServiceException("File upload failed", e);
         }
     }
 
-    public Document update(Long id, Document changes) {
-        Document existing = repo.findById(id)
-                .orElseThrow(() -> new NotFoundException("Document " + id + " not found"));
-        existing.setFileName(changes.getFileName());
-        existing.setSummary(changes.getSummary());
-        Document updated = repo.save(existing);
-        log.info("Document updated: id={}", updated.getId());
-        return updated;
+    // ----------------------------------------------------
+    // Elasticsearch indexing (SINGLE SOURCE OF TRUTH)
+    // ----------------------------------------------------
+    private void indexDocument(Document doc) {
+        try {
+            String contentText = doc.getContent() != null
+                    ? new String(doc.getContent(), StandardCharsets.UTF_8)
+                    : "";
+
+            DocumentSearchResultDTO esDoc =
+                    new DocumentSearchResultDTO(
+                            doc.getId(),
+                            doc.getFileName(),
+                            contentText,
+                            doc.getSummary()
+                    );
+
+            elasticsearchClient.index(i -> i
+                    .index("documents")
+                    .id(doc.getId().toString())
+                    .document(esDoc)
+            );
+
+            log.info("Indexed document id={} into Elasticsearch", doc.getId());
+
+        } catch (Exception e) {
+            log.error("Failed to index document id={}", doc.getId(), e);
+        }
     }
 
-    public void delete(Long id) {
-        // fetch the doc to get bucket + objectKey
-        Document doc = repo.findById(id)
-                .orElseThrow(() -> new NotFoundException("Document " + id + " not found"));
-
-        // 1) delete the object from S3/MinIO
-        if (doc.getBucket() != null && doc.getObjectKey() != null) {
-            try {
-                s3.deleteObject(DeleteObjectRequest.builder()
-                        .bucket(doc.getBucket())
-                        .key(doc.getObjectKey())
-                        .build());
-                log.info("Deleted S3 object bucket={}, key={}", doc.getBucket(), doc.getObjectKey());
-            } catch (Exception e) {
-                // choose one behavior:
-                // a) fail the whole operation (strict consistency):
-                // throw new ServiceException("Failed to delete S3 object", e);
-
-                // b) log and continue (eventual cleanup acceptable in dev):
-                log.warn("Failed to delete S3 object (bucket={}, key={}): {}",
-                        doc.getBucket(), doc.getObjectKey(), e.toString());
-            }
-        } else {
-            log.warn("Document {} has no bucket/objectKey, skipping S3 delete", id);
-        }
-
-        // 2) delete DB record
-        repo.deleteById(id);
-        log.info("Deleted document id={}", id);
+    // ----------------------------------------------------
+    // CRUD
+    // ----------------------------------------------------
+    public Page<Document> getAll(Pageable pageable) {
+        return repo.findAll(pageable);
     }
 
     public Document getById(Long id) {
@@ -147,28 +148,56 @@ public class DocumentService {
                 .orElseThrow(() -> new NotFoundException("Document " + id + " not found"));
     }
 
-    public Document updateSummary(Long id, String summary) {
+    public Document update(Long id, Document changes) {
         Document existing = repo.findById(id)
                 .orElseThrow(() -> new NotFoundException("Document " + id + " not found"));
 
-        if (summary != null && summary.length() > 2000) {
-            // damit die DB nicht explodiert
-            String shortened = summary.substring(0, 2000);
-            log.warn("Summary too long ({} chars), truncating to 2000 characters for document id={}",
-                    summary.length(), id);
-            existing.setSummary(shortened);
-        } else {
-            existing.setSummary(summary);
-        }
+        existing.setFileName(changes.getFileName());
+        existing.setSummary(changes.getSummary());
 
         Document updated = repo.save(existing);
-        log.info("Summary updated for document id={}", updated.getId());
+        indexDocument(updated); // keep ES in sync
         return updated;
     }
 
+    @Transactional
+    public void delete(Long id) {
+        Optional<Document> opt = repo.findById(id);
+        if (opt.isEmpty()) return;
 
+        Document doc = opt.get();
 
-    public Page<Document> getAll(Pageable pageable) {
-        return repo.findAll(pageable);
+        // delete S3
+        if (doc.getBucket() != null && doc.getObjectKey() != null) {
+            try {
+                s3.deleteObject(DeleteObjectRequest.builder()
+                        .bucket(doc.getBucket())
+                        .key(doc.getObjectKey())
+                        .build());
+            } catch (Exception e) {
+                log.warn("S3 delete failed for id={}", id);
+            }
+        }
+
+        try {
+            repo.delete(doc);
+            log.info("Deleted document id={}", id);
+        } catch (ObjectOptimisticLockingFailureException ignored) {
+        }
+    }
+
+    public Document updateSummary(Long id, String summary) {
+        Document doc = repo.findById(id)
+                .orElseThrow(() -> new NotFoundException("Document " + id + " not found"));
+
+        if (summary != null && summary.length() > 2000) {
+            summary = summary.substring(0, 2000);
+        }
+
+        doc.setSummary(summary);
+        Document updated = repo.save(doc);
+
+        indexDocument(updated); // keep ES updated
+        return updated;
     }
 }

@@ -18,7 +18,8 @@ dms:
 
 # Elasticsearch configuration (for Sprint 6)
 elasticsearch:
-  url: http://elasticsearch:9200
+  url: ${ELASTICSEARCH_URL}
+
 
 # S3 if worker still downloads text files for indexing
 s3:

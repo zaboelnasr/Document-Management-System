@@ -84,29 +84,33 @@ public class OcrListener {
                 event.getId(), bucket, key, text.isEmpty() ? "<no text detected>" : text);
 
 
-
         if (text.isEmpty()) {
             log.warn("No text detected for document id={}, skipping summarization", event.getId());
             return;
         }
 
-        String summary;
-        try {
-            summary = genAiClient.getSummary(text);
-        } catch (Exception e) {
-            log.error("Failed to generate summary for document id={}", event.getId(), e);
-            // Dokument existiert trotzdem, nur ohne summary
-            return;
+        String summary = genAiClient.getSummary(text);
+
+        if (summary == null) {
+            log.info(
+                    "Summary not generated for document id={} (GenAI skipped or failed)",
+                    event.getId()
+            );
+            return; // stop ONLY summary update, not the whole OCR flow
         }
 
         try {
             backendClient.updateSummary(event.getId(), summary);
         } catch (Exception e) {
-            log.error("Failed to update backend with summary for document id={}", event.getId(), e);
+            log.error(
+                    "Failed to update backend with summary for document id={}",
+                    event.getId(),
+                    e
+            );
         }
     }
 
-    private static String getSafe(String value, String fallback) {
+        private static String getSafe(String value, String fallback) {
         return (value != null && !value.isBlank()) ? value : fallback;
     }
 }

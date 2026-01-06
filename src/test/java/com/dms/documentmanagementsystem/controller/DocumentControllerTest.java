@@ -36,40 +36,27 @@ class DocumentControllerTest {
         Mockito.when(service.getAll(any(Pageable.class)))
                 .thenReturn(new PageImpl<>(List.of(d)));
 
-        mvc.perform(get("/api/documents").accept(MediaType.APPLICATION_JSON))
+        mvc.perform(get("/api/documents")
+                        .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk());
     }
 
     @Test
-    void create_valid_returns201() throws Exception {
-        Document created = new Document();
-        created.setId(10L);
-        created.setFileName("hello.pdf");
+    void upload_validFile_returns200() throws Exception {
+        Document saved = new Document();
+        saved.setId(10L);
+        saved.setFileName("hello.pdf");
 
-        Mockito.when(service.create(any(Document.class)))
-                .thenReturn(created);
+        Mockito.when(service.handleFileUpload(any(), any()))
+                .thenReturn(saved);
 
-        String json = """
-          {"fileName":"hello.pdf","summary":"first"}
-        """;
-
-        mvc.perform(post("/api/documents")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(json))
-                .andExpect(status().isCreated())
-                .andExpect(header().string("Location", "/api/documents/10"));
-    }
-
-    @Test
-    void create_invalid_missingFileName_returns400() throws Exception {
-        // @Valid + @NotBlank im DTO sorgt für 400
-        String json = """
-          {"summary":"no filename"}
-        """;
-
-        mvc.perform(post("/api/documents")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(json))
-                .andExpect(status().isBadRequest());
+        mvc.perform(
+                        multipart("/api/documents/upload")
+                                .file("file", "dummy content".getBytes())
+                                .param("summary", "first")
+                )
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(10L))
+                .andExpect(jsonPath("$.fileName").value("hello.pdf"));
     }
 }

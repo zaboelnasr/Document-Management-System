@@ -2,11 +2,11 @@ package com.dms.documentmanagementsystem.controller;
 
 import com.dms.documentmanagementsystem.dto.DocumentRequestDTO;
 import com.dms.documentmanagementsystem.dto.DocumentResponseDTO;
+import com.dms.documentmanagementsystem.dto.DocumentSearchResultDTO;
 import com.dms.documentmanagementsystem.mapper.DocumentMapper;
 import com.dms.documentmanagementsystem.model.Document;
 import com.dms.documentmanagementsystem.service.DocumentService;
-import com.dms.indexing.DocumentSearchResult;
-import com.dms.indexing.service.SearchService;
+import com.dms.documentmanagementsystem.service.SearchService;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -43,19 +43,6 @@ public class DocumentController {
     @GetMapping("/{id}")
     public DocumentResponseDTO getOne(@PathVariable Long id) {
         return DocumentMapper.toDTO(service.getById(id));
-    }
-
-    // ----------------------------------------------------
-    // POST /api/documents
-    // ----------------------------------------------------
-    @PostMapping
-    public ResponseEntity<DocumentResponseDTO> create(
-            @Valid @RequestBody DocumentRequestDTO request) {
-
-        Document created = service.create(DocumentMapper.toEntity(request));
-        DocumentResponseDTO body = DocumentMapper.toDTO(created);
-        URI location = URI.create("/api/documents/" + created.getId());
-        return ResponseEntity.created(location).body(body);
     }
 
     // ----------------------------------------------------
@@ -109,7 +96,7 @@ public class DocumentController {
 
     // PATCH /api/documents/{id}/summary   -- Sprint 6
     @GetMapping("/search")
-    public ResponseEntity<List<DocumentSearchResult>> search(@RequestParam String term) {
+    public ResponseEntity<List<DocumentSearchResultDTO>> search(@RequestParam String term) {
         return ResponseEntity.ok(searchService.search(term));
     }
 

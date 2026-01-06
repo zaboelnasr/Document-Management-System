@@ -25,10 +25,11 @@ services:
       - "5672:5672"
       - "15672:15672"
     healthcheck:
-      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
-      interval: 5s
-      timeout: 5s
-      retries: 10
+      test: [ "CMD-SHELL", "rabbitmq-diagnostics -q ping" ]
+      interval: 10s
+      timeout: 10s
+      retries: 20
+      start_period: 30s
 
   backend:
     build:
@@ -44,6 +45,7 @@ services:
       SPRING_DATASOURCE_PASSWORD: postgres
       SPRING_RABBITMQ_HOST: rabbitmq
       SPRING_RABBITMQ_PORT: 5672
+      ELASTICSEARCH_URL: http://elasticsearch:9200
 
       DMS_RMQ_EXCHANGE: dms.exchange
       DMS_RMQ_ROUTING_UPLOAD: dms.document.uploaded
@@ -64,6 +66,8 @@ services:
       rabbitmq:
         condition: service_healthy
       minio:
+        condition: service_healthy
+      elasticsearch:
         condition: service_healthy
     healthcheck:
       test: ["CMD-SHELL", "curl -fsS -o /dev/null http://localhost:8080/actuator/health/readiness"]
@@ -156,8 +160,8 @@ services:
     environment:
       SPRING_RABBITMQ_HOST: rabbitmq
       SPRING_RABBITMQ_PORT: 5672
-      ELASTICSEARCH_HOST: elasticsearch
-      ELASTICSEARCH_PORT: 9200
+
+      ELASTICSEARCH_URL: http://elasticsearch:9200
     depends_on:
       rabbitmq:
         condition: service_healthy
@@ -165,21 +169,28 @@ services:
         condition: service_healthy
 
 
+
   elasticsearch:
     image: docker.elastic.co/elasticsearch/elasticsearch:8.12.2
     container_name: elasticsearch
     environment:
       - discovery.type=single-node
-      - ES_JAVA_OPTS=-Xms1g -Xmx1g
+      - ES_JAVA_OPTS=-Xms512m -Xmx512m
       - xpack.security.enabled=false
       - xpack.security.http.ssl.enabled=false
     ports:
       - "9200:9200"
     healthcheck:
-      test: [ "CMD-SHELL", "curl -f http://localhost:9200 || exit 1" ]
-      interval: 10s
-      timeout: 5s
-      retries: 5
+      test:
+        [
+          "CMD-SHELL",
+          "curl -s http://localhost:9200/_cluster/health | grep -E '\"status\":\"(yellow|green)\"' || exit 1"
+        ]
+      interval: 15s
+      timeout: 10s
+      retries: 10
+      start_period: 90s
+
 
 
 volumes:

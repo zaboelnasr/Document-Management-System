@@ -1,10 +1,12 @@
 package com.dms.documentmanagementsystem.service;
 
+import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import com.dms.documentmanagementsystem.exception.NotFoundException;
 import com.dms.documentmanagementsystem.messaging.DocumentUploadedEvent;
 import com.dms.documentmanagementsystem.model.Document;
 import com.dms.documentmanagementsystem.repository.DocumentRepository;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -18,47 +20,18 @@ import static org.mockito.Mockito.*;
 
 class DocumentServiceTest {
 
-    @Test
-    void create_savesDocument_andPublishesEvent() {
-        // Arrange
-        S3Client s3 = Mockito.mock(S3Client.class);
-        DocumentRepository repo = Mockito.mock(DocumentRepository.class);
-        RabbitTemplate rabbitTemplate = Mockito.mock(RabbitTemplate.class);
+    private DocumentService service;
 
-        DocumentService service = new DocumentService(s3, repo, rabbitTemplate);
-
-        // Inject values normally provided by @Value in production
-        ReflectionTestUtils.setField(service, "exchange", "dms.exchange");
-        ReflectionTestUtils.setField(service, "uploadRoutingKey", "dms.document.uploaded");
-
-        Document toSave = new Document();
-        toSave.setFileName("a.pdf");
-
-        Document saved = new Document();
-        saved.setId(1L);
-        saved.setFileName("a.pdf");
-
-        when(repo.save(any(Document.class))).thenReturn(saved);
-
-        // Act
-        Document result = service.create(toSave);
-
-        // Assert
-        assertEquals(1L, result.getId());
-        verify(repo).save(any(Document.class));
-        verify(rabbitTemplate).convertAndSend(
-                eq("dms.exchange"),
-                eq("dms.document.uploaded"),
-                any(DocumentUploadedEvent.class)
-        );
-    }
+    @Mock
+    private ElasticsearchClient elasticsearchClient;
 
     @Test
     void getById_notFound_throwsNotFoundException() {
-        S3Client s3 = Mockito.mock(S3Client.class);
-        DocumentRepository repo = Mockito.mock(DocumentRepository.class);
-        RabbitTemplate rabbitTemplate = Mockito.mock(RabbitTemplate.class);
-        DocumentService service = new DocumentService(s3, repo, rabbitTemplate);
+        S3Client s3 = mock(S3Client.class);
+        DocumentRepository repo = mock(DocumentRepository.class);
+        RabbitTemplate rabbitTemplate = mock(RabbitTemplate.class);
+
+        service = new DocumentService(s3, repo, rabbitTemplate, elasticsearchClient);
 
         when(repo.findById(999L)).thenReturn(Optional.empty());
 
@@ -67,10 +40,11 @@ class DocumentServiceTest {
 
     @Test
     void update_updatesFields() {
-        S3Client s3 = Mockito.mock(S3Client.class);
-        DocumentRepository repo = Mockito.mock(DocumentRepository.class);
-        RabbitTemplate rabbitTemplate = Mockito.mock(RabbitTemplate.class);
-        DocumentService service = new DocumentService(s3, repo, rabbitTemplate);
+        S3Client s3 = mock(S3Client.class);
+        DocumentRepository repo = mock(DocumentRepository.class);
+        RabbitTemplate rabbitTemplate = mock(RabbitTemplate.class);
+
+        service = new DocumentService(s3, repo, rabbitTemplate, elasticsearchClient);
 
         Document existing = new Document();
         existing.setId(5L);
@@ -88,19 +62,21 @@ class DocumentServiceTest {
 
         assertEquals("new.pdf", result.getFileName());
         assertEquals("new", result.getSummary());
-        verify(repo).save(any(Document.class));
     }
 
     @Test
-    void delete_notFound_throwsNotFoundException() {
-        S3Client s3 = Mockito.mock(S3Client.class);
-        DocumentRepository repo = Mockito.mock(DocumentRepository.class);
-        RabbitTemplate rabbitTemplate = Mockito.mock(RabbitTemplate.class);
-        DocumentService service = new DocumentService(s3, repo, rabbitTemplate);
+    void delete_nonExisting_doesNothing() {
+        S3Client s3 = mock(S3Client.class);
+        DocumentRepository repo = mock(DocumentRepository.class);
+        RabbitTemplate rabbitTemplate = mock(RabbitTemplate.class);
 
-        when(repo.existsById(42L)).thenReturn(false);
+        service = new DocumentService(s3, repo, rabbitTemplate, elasticsearchClient);
 
-        assertThrows(NotFoundException.class, () -> service.delete(42L));
-        verify(repo, never()).deleteById(anyLong());
+        when(repo.findById(42L)).thenReturn(Optional.empty());
+
+        // should NOT throw
+        assertDoesNotThrow(() -> service.delete(42L));
+
+        verify(repo, never()).delete(any());
     }
 }
