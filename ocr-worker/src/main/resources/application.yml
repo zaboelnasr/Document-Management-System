@@ -14,6 +14,7 @@ dms:
       upload: dms.document.uploaded
     routing:
       upload: dms.document.uploaded
+      ocr-result: ocr.result
 
 s3:
   endpoint: ${S3_ENDPOINT:http://localhost:9000}

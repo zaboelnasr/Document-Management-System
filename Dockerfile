@@ -5,20 +5,6 @@ WORKDIR /app
 # Copy POM and source
 COPY pom.xml .
 COPY src ./src
-
-# --- NEW SECTION: install local indexing-worker dependency ---
-# Copy the built indexing-worker JAR from your host into the container
-COPY ../indexing-worker/target/indexing-worker-1.0.0.jar /tmp/indexing-worker.jar
-
-# Install it into Maven local repo inside container
-RUN mvn install:install-file \
-    -Dfile=/tmp/indexing-worker.jar \
-    -DgroupId=com.dms \
-    -DartifactId=indexing-worker \
-    -Dversion=1.0.0 \
-    -Dpackaging=jar
-
-# Now build backend
 RUN mvn -q -DskipTests package
 
 # ---- runtime stage ----
