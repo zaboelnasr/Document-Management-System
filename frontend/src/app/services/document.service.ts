@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 
@@ -10,7 +10,8 @@ export interface DocumentDto {
   content?: any;
   createdAt?: string;
   updatedAt?: string;
-  ocrStatus?: 'PENDING' | 'COMPLETED' | 'FAILED'; // 👈 added for OCR progress display
+  ocrStatus?: 'PENDING' | 'COMPLETED' | 'FAILED';
+  reviewStatus?: 'OPEN' | 'IN_REVIEW' | 'REVIEWED';
 }
 
 export interface Page<T> {
@@ -40,40 +41,43 @@ export class DocumentService {
   constructor(private http: HttpClient) {}
 
   // Get all documents (paged)
-  getDocuments() {
-    return this.http.get<Page<DocumentDto>>(this.apiUrl).pipe(
+  getDocuments(status?: string) {
+    let params = new HttpParams();
+    if (status) {
+      params = params.set('status', status);
+    }
+    return this.http.get<Page<DocumentDto>>(this.apiUrl, { params }).pipe(
       map((p) => p.content ?? [])
     );
   }
 
-  // Get a single document
   getDocument(id: number): Observable<DocumentDto> {
     return this.http.get<DocumentDto>(`${this.apiUrl}/${id}`);
   }
 
-  // Add a new document (metadata only)
   addDocument(doc: CreateDocumentRequest): Observable<DocumentDto> {
     return this.http.post<DocumentDto>(this.apiUrl, doc);
   }
 
-  // Upload a real file (PDF/image)
   uploadDocument(formData: FormData): Observable<DocumentDto> {
     return this.http.post<DocumentDto>(`${this.apiUrl}/upload`, formData);
   }
 
-  // Update document metadata
   updateDocument(id: number, doc: UpdateDocumentRequest): Observable<DocumentDto> {
     return this.http.put<DocumentDto>(`${this.apiUrl}/${id}`, doc);
   }
 
-  // Delete a document
   deleteDocument(id: number): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/${id}`);
   }
-  //Search a document
+
   searchDocuments(term: string): Observable<DocumentDto[]> {
     return this.http.get<DocumentDto[]>(
       `${this.apiUrl}/search?term=${encodeURIComponent(term)}`
     );
+  }
+
+  updateReviewStatus(id: number, status: string): Observable<void> {
+    return this.http.patch<void>(`${this.apiUrl}/${id}/review-status`, { status });
   }
 }

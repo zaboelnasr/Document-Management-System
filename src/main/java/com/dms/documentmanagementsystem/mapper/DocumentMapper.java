@@ -21,6 +21,9 @@ public class DocumentMapper {
         dto.setSummary(entity.getSummary());
         dto.setCreatedAt(entity.getCreatedAt());
         dto.setUpdatedAt(entity.getUpdatedAt());
+        if (entity.getReview() != null && entity.getReview().getStatus() != null) {
+            dto.setReviewStatus(entity.getReview().getStatus().name());
+        }
         return dto;
     }
 }

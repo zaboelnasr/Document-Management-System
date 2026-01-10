@@ -14,5 +14,5 @@ public class DocumentResponseDTO {
     private String summary;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
-
+    private String reviewStatus;
 }
