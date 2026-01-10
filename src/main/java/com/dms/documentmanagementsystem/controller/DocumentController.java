@@ -2,11 +2,13 @@ package com.dms.documentmanagementsystem.controller;
 
 import com.dms.documentmanagementsystem.dto.DocumentRequestDTO;
 import com.dms.documentmanagementsystem.dto.DocumentResponseDTO;
+import com.dms.documentmanagementsystem.dto.DocumentSearchResultDTO;
 import com.dms.documentmanagementsystem.dto.ReviewStatusRequest;
 import com.dms.documentmanagementsystem.mapper.DocumentMapper;
 import com.dms.documentmanagementsystem.model.Document;
 import com.dms.documentmanagementsystem.model.ReviewStatus;
 import com.dms.documentmanagementsystem.service.DocumentService;
+import com.dms.documentmanagementsystem.service.SearchService;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -15,6 +17,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.net.URI;
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -22,9 +25,11 @@ import java.util.Map;
 public class DocumentController {
 
     private final DocumentService service;
+    private final SearchService searchService;
 
-    public DocumentController(DocumentService service) {
+    public DocumentController(DocumentService service, SearchService searchService) {
         this.service = service;
+        this.searchService = searchService;
     }
 
     // ----------------------------------------------------
@@ -42,28 +47,15 @@ public class DocumentController {
     // ----------------------------------------------------
     // GET /api/documents/{id}
     // ----------------------------------------------------
-    @GetMapping("/{id}")
+    @GetMapping("/{id:\\d+}")
     public DocumentResponseDTO getOne(@PathVariable Long id) {
         return DocumentMapper.toDTO(service.getById(id));
     }
 
     // ----------------------------------------------------
-    // POST /api/documents
-    // ----------------------------------------------------
-    @PostMapping
-    public ResponseEntity<DocumentResponseDTO> create(
-            @Valid @RequestBody DocumentRequestDTO request) {
-
-        Document created = service.create(DocumentMapper.toEntity(request));
-        DocumentResponseDTO body = DocumentMapper.toDTO(created);
-        URI location = URI.create("/api/documents/" + created.getId());
-        return ResponseEntity.created(location).body(body);
-    }
-
-    // ----------------------------------------------------
     // PUT /api/documents/{id}
     // ----------------------------------------------------
-    @PutMapping("/{id}")
+    @PutMapping("/{id:\\d+}")
     public DocumentResponseDTO update(
             @PathVariable Long id,
             @Valid @RequestBody DocumentRequestDTO request) {
@@ -75,7 +67,7 @@ public class DocumentController {
     // ----------------------------------------------------
     // DELETE /api/documents/{id}
     // ----------------------------------------------------
-    @DeleteMapping("/{id}")
+    @DeleteMapping("/{id:\\d+}")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         service.delete(id);
         return ResponseEntity.noContent().build();
@@ -95,7 +87,7 @@ public class DocumentController {
     // ----------------------------------------------------
     // PATCH /api/documents/{id}/summary
     // ----------------------------------------------------
-    @PostMapping("/{id}/summary")
+    @PostMapping("/{id:\\d+}/summary")
     public ResponseEntity<Void> updateSummary(
             @PathVariable Long id,
             @RequestBody Map<String, String> body) {
@@ -110,9 +102,17 @@ public class DocumentController {
     }
 
     // ----------------------------------------------------
+    // GET /api/documents/search
+    // ----------------------------------------------------
+    @GetMapping("/search")
+    public ResponseEntity<List<DocumentSearchResultDTO>> search(@RequestParam String term) {
+        return ResponseEntity.ok(searchService.search(term));
+    }
+
+    // ----------------------------------------------------
     // PATCH /api/documents/{id}/review-status
     // ----------------------------------------------------
-    @PatchMapping("/{id}/review-status")
+    @PatchMapping("/{id:\\d+}/review-status")
     public ResponseEntity<Void> updateReviewStatus(
             @PathVariable Long id,
             @Valid @RequestBody ReviewStatusRequest request) {

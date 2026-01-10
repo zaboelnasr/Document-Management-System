@@ -55,6 +55,49 @@ export class DashboardComponent implements OnInit {
       });
   }
 
+  // Search a document
+  searchDocuments(): void {
+    if (!this.searchTerm.trim()) {
+      this.loadDocuments();
+      return;
+    }
+
+    this.loading = true;
+    this.docService.searchDocuments(this.searchTerm)
+      .pipe(finalize(() => (this.loading = false)))
+      .subscribe({
+        next: (results) => {
+          const mapped = (results ?? []).map((d) => ({
+            ...d,
+            reviewStatus: d.reviewStatus ?? 'OPEN',
+            editing: false
+          }));
+
+          if (this.statusFilter === 'ALL') {
+            this.documents = mapped;
+          } else {
+            this.documents = mapped.filter(
+              (d) => d.reviewStatus === this.statusFilter
+            );
+          }
+        },
+        error: (err) => (this.errorMsg = 'Search failed: ' + err.message)
+      });
+  }
+
+  clearSearch(): void {
+    this.searchTerm = '';
+    this.loadDocuments();
+  }
+
+  onStatusFilterChange(): void {
+    if (this.searchTerm.trim()) {
+      this.searchDocuments();
+    } else {
+      this.loadDocuments();
+    }
+  }
+
   // Handle file selection
   onFileSelected(event: any): void {
     this.selectedFile = event.target.files[0];
@@ -109,51 +152,6 @@ export class DashboardComponent implements OnInit {
         next: (_) => this.loadDocuments(),
         error: (err) => console.error('[PUT /documents] error:', err)
       });
-  }
-
-  searchDocuments(): void {
-    if (!this.searchTerm.trim()) {
-      this.loadDocuments();
-      return;
-    }
-
-    this.loading = true;
-    this.docService.searchDocuments(this.searchTerm)
-      .pipe(finalize(() => (this.loading = false)))
-      .subscribe({
-        next: (results) => {
-          const mapped = (results ?? []).map((d) => ({
-            ...d,
-            reviewStatus: d.reviewStatus ?? 'OPEN',
-            editing: false
-          }));
-
-          if (this.statusFilter === 'ALL') {
-            this.documents = mapped;
-          } else {
-            this.documents = mapped.filter(
-              (d) => d.reviewStatus === this.statusFilter
-            );
-          }
-        },
-        error: (err) => {
-          console.error('[SEARCH /documents] error:', err);
-          this.errorMsg = 'Search failed.';
-        }
-      });
-  }
-
-  clearSearch(): void {
-    this.searchTerm = '';
-    this.loadDocuments();
-  }
-
-  onStatusFilterChange(): void {
-    if (this.searchTerm.trim()) {
-      this.searchDocuments();
-    } else {
-      this.loadDocuments();
-    }
   }
 
   updateReviewStatus(doc: DocumentDto & { editing?: boolean }): void {
