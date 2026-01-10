@@ -4,7 +4,6 @@ import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import com.dms.documentmanagementsystem.dto.DocumentSearchResultDTO;
 import com.dms.documentmanagementsystem.model.Document;
 import com.dms.documentmanagementsystem.repository.DocumentRepository;
-import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
@@ -38,12 +37,19 @@ public class ElasticsearchReindexer {
                         ? new String(doc.getContent(), StandardCharsets.UTF_8)
                         : "";
 
+                String reviewStatus = null;
+                if (doc.getReview() != null && doc.getReview().getStatus() != null) {
+                    reviewStatus = doc.getReview().getStatus().name();
+                }
+
                 DocumentSearchResultDTO esDoc =
                         new DocumentSearchResultDTO(
                                 doc.getId(),
                                 doc.getFileName(),
                                 contentText,
-                                doc.getSummary()
+                                doc.getSummary(),
+                                doc.getCreatedAt(),
+                                reviewStatus
                         );
 
                 elasticsearchClient.index(i -> i

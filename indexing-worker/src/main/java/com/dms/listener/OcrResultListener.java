@@ -23,7 +23,9 @@ public class OcrResultListener {
                 event.documentId(),
                 event.fileName(),
                 event.text(),
-                event.summary()
+                event.summary(),
+                event.createdAt(),
+                event.reviewStatus()
         );
 
         indexingService.index(doc);

@@ -21,7 +21,9 @@ class IndexingServiceTest {
                 1L,
                 "test.pdf",
                 "OCR TEXT CONTENT",
-                "summary"
+                "summary",
+                java.time.LocalDateTime.now(),
+                "OPEN"
         );
 
         // Act

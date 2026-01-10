@@ -28,8 +28,11 @@ public class IndexingListener {
                 "id", msg.get("documentId"),
                 "fileName", msg.get("fileName"),
                 "content", msg.get("content"),
-                "createdAt", msg.get("createdAt")
+                "summary", msg.get("summary"),
+                "createdAt", msg.get("createdAt"),
+                "reviewStatus", msg.get("reviewStatus")
         );
+
 
         IndexRequest<Map<String, Object>> request = IndexRequest.of(i -> i
                 .index(ElasticsearchConstants.DOCUMENT_INDEX)

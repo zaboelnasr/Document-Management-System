@@ -8,24 +8,13 @@ import java.time.LocalDateTime;
 
 public class DocumentUploadedEvent implements Serializable {
 
-    @Setter
-    @Getter
-    private Long id;
-    @Setter
-    @Getter
-    private String fileName;
-    @Setter
-    @Getter
-    private String summary;
-    @Setter
-    @Getter
-    private LocalDateTime createdAt;
-    @Setter
-    @Getter
-    private String bucket;
-    @Setter
-    @Getter
-    private String objectKey;
+    @Setter @Getter private Long id;
+    @Setter @Getter private String fileName;
+    @Setter @Getter private String summary;
+    @Setter @Getter private LocalDateTime createdAt;
+    @Setter @Getter private String bucket;
+    @Setter @Getter private String objectKey;
+    @Setter @Getter private String reviewStatus;
 
     public DocumentUploadedEvent() {}
 
@@ -35,7 +24,8 @@ public class DocumentUploadedEvent implements Serializable {
             String summary,
             LocalDateTime createdAt,
             String bucket,
-            String objectKey
+            String objectKey,
+            String reviewStatus
     ) {
         this.id = id;
         this.fileName = fileName;
@@ -43,6 +33,7 @@ public class DocumentUploadedEvent implements Serializable {
         this.createdAt = createdAt;
         this.bucket = bucket;
         this.objectKey = objectKey;
+        this.reviewStatus = reviewStatus;
     }
 
     @Override
@@ -54,6 +45,7 @@ public class DocumentUploadedEvent implements Serializable {
                 ", createdAt=" + createdAt +
                 ", bucket='" + bucket + '\'' +
                 ", objectKey='" + objectKey + '\'' +
+                ", reviewStatus='" + reviewStatus + '\'' +
                 '}';
     }
 }

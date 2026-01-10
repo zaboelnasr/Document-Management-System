@@ -134,8 +134,11 @@ public class OcrListener {
                         event.getId(),
                         event.getFileName(),
                         text,
-                        summary
+                        summary,
+                        event.getCreatedAt(),
+                        event.getReviewStatus()
                 )
+
         );
 
         log.info("Published OcrResultEvent for document id={}", event.getId());

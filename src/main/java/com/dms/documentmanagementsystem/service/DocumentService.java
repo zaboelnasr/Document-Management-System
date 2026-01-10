@@ -97,8 +97,12 @@ public class DocumentService {
                     saved.getSummary(),
                     saved.getCreatedAt(),
                     saved.getBucket(),
-                    saved.getObjectKey()
+                    saved.getObjectKey(),
+                    saved.getReview() != null && saved.getReview().getStatus() != null
+                            ? saved.getReview().getStatus().name()
+                            : null
             );
+
 
             rabbitTemplate.convertAndSend(exchange, uploadRoutingKey, event);
             log.info("Published DocumentUploadedEvent for id={}", saved.getId());
@@ -120,12 +124,19 @@ public class DocumentService {
                     ? new String(doc.getContent(), StandardCharsets.UTF_8)
                     : "";
 
+            String reviewStatus = null;
+            if (doc.getReview() != null && doc.getReview().getStatus() != null) {
+                reviewStatus = doc.getReview().getStatus().name();
+            }
+
             DocumentSearchResultDTO esDoc =
                     new DocumentSearchResultDTO(
                             doc.getId(),
                             doc.getFileName(),
                             contentText,
-                            doc.getSummary()
+                            doc.getSummary(),
+                            doc.getCreatedAt(),
+                            reviewStatus
                     );
 
             elasticsearchClient.index(i -> i
@@ -140,6 +151,7 @@ public class DocumentService {
             log.error("Failed to index document id={}", doc.getId(), e);
         }
     }
+
 
     // ----------------------------------------------------
     // CRUD
@@ -196,6 +208,12 @@ public class DocumentService {
             log.info("Deleted document id={}", id);
         } catch (ObjectOptimisticLockingFailureException ignored) {
         }
+
+        try {
+            elasticsearchClient.delete(d -> d.index("documents").id(id.toString()));
+        } catch (Exception e) {
+            log.warn("Elasticsearch delete failed for id={}", id);
+        }
     }
 
     public Document updateSummary(Long id, String summary) {
@@ -226,7 +244,10 @@ public class DocumentService {
 
         review.setStatus(status);
         reviewRepo.save(review);
+
+        indexDocument(doc);
     }
+
 
     private void ensureReview(Document doc, ReviewStatus status) {
         Optional<DocumentReview> existing = reviewRepo.findByDocumentId(doc.getId());
