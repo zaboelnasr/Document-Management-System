@@ -1,7 +1,9 @@
 package com.dms.documentmanagementsystem.controller;
 
 import com.dms.documentmanagementsystem.model.Document;
+import com.dms.documentmanagementsystem.model.ReviewStatus;
 import com.dms.documentmanagementsystem.service.DocumentService;
+import com.dms.documentmanagementsystem.service.SearchService;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,6 +17,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -27,13 +30,16 @@ class DocumentControllerTest {
     @MockitoBean
     private DocumentService service;
 
+    @MockitoBean
+    private SearchService searchService;
+
     @Test
     void getAll_returnsOkPage() throws Exception {
         Document d = new Document();
         d.setId(1L);
         d.setFileName("a.pdf");
 
-        Mockito.when(service.getAll(any(Pageable.class)))
+        Mockito.when(service.getAll(any(Pageable.class), isNull()))
                 .thenReturn(new PageImpl<>(List.of(d)));
 
         mvc.perform(get("/api/documents")
