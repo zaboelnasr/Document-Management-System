@@ -1,10 +1,11 @@
 package com.dms.service;
 
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
-import co.elastic.clients.elasticsearch.core.IndexRequest;
 import com.dms.dto.DocumentIndexDTO;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
+
+import java.util.function.Function;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
@@ -30,6 +31,6 @@ class IndexingServiceTest {
         service.index(dto);
 
         // Assert
-        verify(client).index((IndexRequest<Object>) any());
+        verify(client).index(any(Function.class));
     }
 }
