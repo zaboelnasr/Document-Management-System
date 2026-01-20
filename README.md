@@ -10,6 +10,7 @@ docker compose up -d db rabbitmq minio ocr-worker genai-worker
 ```
 then run the ../src/main/java/com.dms.documentmanagementsystem/DocumentManagementSystemApplication.java application simply by pressing the green play button.
 ```bash
+cd frontend
 ng serve
 ```
 Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
