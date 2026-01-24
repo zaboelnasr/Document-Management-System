@@ -70,6 +70,11 @@ public class OcrListener {
 
         if (text.isEmpty()) {
             log.warn("No text detected for document id={}", event.getId());
+            try {
+                backendClient.updateOcrStatus(event.getId(), "FAILED");
+            } catch (Exception e) {
+                log.warn("Failed to update OCR status to FAILED for id={}", event.getId());
+            }
             return;
         }
 
@@ -88,6 +93,12 @@ public class OcrListener {
             } catch (Exception e) {
                 log.error("Failed to update backend summary for id={}", event.getId(), e);
             }
+        }
+
+        try {
+            backendClient.updateOcrStatus(event.getId(), "COMPLETED");
+        } catch (Exception e) {
+            log.warn("Failed to update OCR status to COMPLETED for id={}", event.getId());
         }
 
         // 5) 🚀 SEND OCR RESULT TO INDEXING WORKER

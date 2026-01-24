@@ -37,6 +37,9 @@ public class Document {
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
+    @Enumerated(EnumType.STRING)
+    private OcrStatus ocrStatus;
+
     @OneToOne(mappedBy = "document", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private DocumentReview review;
 
@@ -47,6 +50,9 @@ public class Document {
     void onCreate() {
         createdAt = LocalDateTime.now();
         updatedAt = createdAt;
+        if (ocrStatus == null) {
+            ocrStatus = OcrStatus.PENDING;
+        }
     }
 
     /**

@@ -6,6 +6,7 @@ import com.dms.documentmanagementsystem.exception.ServiceException;
 import com.dms.documentmanagementsystem.messaging.DocumentUploadedEvent;
 import com.dms.documentmanagementsystem.model.Document;
 import com.dms.documentmanagementsystem.model.DocumentReview;
+import com.dms.documentmanagementsystem.model.OcrStatus;
 import com.dms.documentmanagementsystem.model.ReviewStatus;
 import com.dms.documentmanagementsystem.repository.DocumentRepository;
 import com.dms.documentmanagementsystem.repository.DocumentReviewRepository;
@@ -82,6 +83,7 @@ public class DocumentService {
             doc.setContentType(file.getContentType());
             doc.setSize(file.getSize());
             doc.setCreatedAt(LocalDateTime.now());
+            doc.setOcrStatus(OcrStatus.PENDING);
 
             Document saved = repo.save(doc);
             ensureReview(saved, ReviewStatus.OPEN);
@@ -246,6 +248,13 @@ public class DocumentService {
         reviewRepo.save(review);
 
         indexDocument(doc);
+    }
+
+    public void updateOcrStatus(Long id, OcrStatus status) {
+        Document doc = repo.findById(id)
+                .orElseThrow(() -> new NotFoundException("Document " + id + " not found"));
+        doc.setOcrStatus(status);
+        repo.save(doc);
     }
 
 

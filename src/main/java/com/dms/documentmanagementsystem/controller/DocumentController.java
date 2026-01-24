@@ -4,8 +4,10 @@ import com.dms.documentmanagementsystem.dto.DocumentRequestDTO;
 import com.dms.documentmanagementsystem.dto.DocumentResponseDTO;
 import com.dms.documentmanagementsystem.dto.DocumentSearchResultDTO;
 import com.dms.documentmanagementsystem.dto.ReviewStatusRequest;
+import com.dms.documentmanagementsystem.dto.OcrStatusRequest;
 import com.dms.documentmanagementsystem.mapper.DocumentMapper;
 import com.dms.documentmanagementsystem.model.Document;
+import com.dms.documentmanagementsystem.model.OcrStatus;
 import com.dms.documentmanagementsystem.model.ReviewStatus;
 import com.dms.documentmanagementsystem.service.DocumentService;
 import com.dms.documentmanagementsystem.service.SearchService;
@@ -125,6 +127,25 @@ public class DocumentController {
         }
 
         service.updateReviewStatus(id, status);
+        return ResponseEntity.noContent().build();
+    }
+
+    // ----------------------------------------------------
+    // PATCH /api/documents/{id}/ocr-status
+    // ----------------------------------------------------
+    @PatchMapping("/{id:\\d+}/ocr-status")
+    public ResponseEntity<Void> updateOcrStatus(
+            @PathVariable Long id,
+            @Valid @RequestBody OcrStatusRequest request) {
+
+        OcrStatus status;
+        try {
+            status = OcrStatus.valueOf(request.getStatus().trim().toUpperCase());
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().build();
+        }
+
+        service.updateOcrStatus(id, status);
         return ResponseEntity.noContent().build();
     }
 

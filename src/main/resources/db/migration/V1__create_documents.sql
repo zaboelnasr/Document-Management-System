@@ -8,5 +8,6 @@ CREATE TABLE IF NOT EXISTS documents (
     size BIGINT,
     content OID,
     created_at TIMESTAMP,
-    updated_at TIMESTAMP
+    updated_at TIMESTAMP,
+    ocr_status VARCHAR(32) DEFAULT 'PENDING'
 );
