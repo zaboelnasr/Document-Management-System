@@ -192,6 +192,20 @@ services:
       start_period: 90s
 
 
+  schedule-worker:
+    container_name: dms-schedule-worker
+    build:
+      context: ./schedule-worker
+    depends_on:
+      - db
+    volumes:
+      - ./schedule-worker/data:/data
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+
+
+
+
 
 volumes:
   db_data:
