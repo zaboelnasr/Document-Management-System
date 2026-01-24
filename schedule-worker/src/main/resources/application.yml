@@ -23,4 +23,7 @@ schedule:
   file-pattern: "*.xml"
   archive-folder: schedule-worker/archive-xml
   batch-size: 100
-  cron: "0 50 16 * * *"
+  cron: "0 0 1 * * *"
+
+server:
+  port: 8091

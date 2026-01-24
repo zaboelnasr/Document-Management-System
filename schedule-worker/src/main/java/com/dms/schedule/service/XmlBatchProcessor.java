@@ -94,16 +94,17 @@ public class XmlBatchProcessor {
         Files.createDirectories(Path.of(archiveFolder));
     }
 
-    public void processXmlBatch() {
+    public BatchResult processXmlBatch() {
         String pattern = resolvePattern();
         boolean classpathSource = isClasspathSource(pattern);
-        boolean processedAny = false;
+        int processedFiles = 0;
+        int processedDocuments = 0;
 
         try {
             Resource[] resources = resourceResolver.getResources(pattern);
             if (resources.length == 0) {
                 log.info("No XML resources found for pattern: {}", pattern);
-                return;
+                return new BatchResult(0, 0);
             }
 
             for (Resource resource : resources) {
@@ -129,7 +130,8 @@ public class XmlBatchProcessor {
                     upsertReviews(records);
                     upsertAccessLogs(records);
                     publishIndexMessages(records);
-                    processedAny = true;
+                    processedFiles += 1;
+                    processedDocuments += records.size();
                     archiveResource(resource, fileName, classpathSource);
                 } catch (Exception e) {
                     log.error("Failed to process {}: {}", fileName, e.getMessage());
@@ -139,9 +141,11 @@ public class XmlBatchProcessor {
             log.error("Failed to resolve XML resources for pattern {}: {}", pattern, e.getMessage());
         }
 
-        if (processedAny && reindexEnabled) {
+        if (processedFiles > 0 && reindexEnabled) {
             triggerReindex();
         }
+
+        return new BatchResult(processedFiles, processedDocuments);
     }
 
     private String resolvePattern() {
@@ -481,5 +485,23 @@ public class XmlBatchProcessor {
         private LocalDateTime reviewUpdatedAt;
         private LocalDate accessDate;
         private Integer accessCount;
+    }
+
+    public static class BatchResult {
+        private final int processedFiles;
+        private final int processedDocuments;
+
+        public BatchResult(int processedFiles, int processedDocuments) {
+            this.processedFiles = processedFiles;
+            this.processedDocuments = processedDocuments;
+        }
+
+        public int getProcessedFiles() {
+            return processedFiles;
+        }
+
+        public int getProcessedDocuments() {
+            return processedDocuments;
+        }
     }
 }

@@ -205,6 +205,8 @@ services:
       - SCHEDULE_INPUT_FOLDER=/data/incoming
       - SCHEDULE_ARCHIVE_FOLDER=/data/archive
       - SCHEDULE_FILE_PATTERN=*.xml
+    ports:
+      - "8091:8091"
 
 
 
