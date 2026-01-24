@@ -103,6 +103,13 @@ export class DashboardComponent implements OnInit {
   onFileSelected(event: any): void {
     const input = event.target as HTMLInputElement;
     this.selectedFile = input.files && input.files.length ? input.files[0] : null;
+    if (this.selectedFile && this.selectedFile.type !== 'application/pdf') {
+      alert('Please select a PDF file.');
+      this.selectedFile = null;
+      if (this.fileInput?.nativeElement) {
+        this.fileInput.nativeElement.value = '';
+      }
+    }
   }
 
   // Upload new document (file + summary)
