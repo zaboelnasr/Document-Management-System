@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, NgForm } from '@angular/forms';
 import {
@@ -17,8 +17,9 @@ import { finalize } from 'rxjs/operators';
   templateUrl: './dashboard.component.html'
 })
 export class DashboardComponent implements OnInit {
+  @ViewChild('fileInput') fileInput?: ElementRef<HTMLInputElement>;
   documents: (DocumentDto & { editing?: boolean })[] = [];
-  newDocument: CreateDocumentRequest = { fileName: '', summary: '' };
+  newDocument: CreateDocumentRequest = { fileName: '', summary: 'PENDING' };
   selectedFile: File | null = null;
   loading = false;
   errorMsg = '';
@@ -100,19 +101,20 @@ export class DashboardComponent implements OnInit {
 
   // Handle file selection
   onFileSelected(event: any): void {
-    this.selectedFile = event.target.files[0];
+    const input = event.target as HTMLInputElement;
+    this.selectedFile = input.files && input.files.length ? input.files[0] : null;
   }
 
   // Upload new document (file + summary)
   uploadDocument(form?: NgForm): void {
-    if (!this.selectedFile || !this.newDocument.summary.trim()) {
-      alert('Please select a file and enter a summary.');
+    if (!this.selectedFile) {
+      alert('Please select a file.');
       return;
     }
 
     const formData = new FormData();
     formData.append('file', this.selectedFile);
-    formData.append('summary', this.newDocument.summary);
+    formData.append('summary', 'Pending');
 
     this.loading = true;
     this.docService.uploadDocument(formData)
@@ -120,7 +122,10 @@ export class DashboardComponent implements OnInit {
       .subscribe({
         next: (_) => {
           this.selectedFile = null;
-          this.newDocument.summary = '';
+          this.newDocument.summary = 'Pending';
+          if (this.fileInput?.nativeElement) {
+            this.fileInput.nativeElement.value = '';
+          }
           form?.resetForm();
           this.loadDocuments();
         },
