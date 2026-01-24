@@ -13,8 +13,10 @@ dms:
     exchange: dms.exchange
     queue:
       index: dms.document.index
+      ocr-result: ocr.result
     routing:
       index: dms.document.index
+      ocr-result: ocr.result
 
 # Elasticsearch configuration (for Sprint 6)
 elasticsearch:

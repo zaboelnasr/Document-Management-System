@@ -14,8 +14,14 @@ public class RabbitMQConfig {
     @Value("${dms.rmq.queue.index}")
     private String indexQueue;
 
+    @Value("${dms.rmq.queue.ocr-result}")
+    private String ocrResultQueue;
+
     @Value("${dms.rmq.routing.index}")
     private String routingKey;
+
+    @Value("${dms.rmq.routing.ocr-result}")
+    private String ocrResultRoutingKey;
 
     @Bean
     public TopicExchange dmsExchange() {
@@ -28,10 +34,23 @@ public class RabbitMQConfig {
     }
 
     @Bean
+    public Queue ocrResultQueue() {
+        return QueueBuilder.durable(ocrResultQueue).build();
+    }
+
+    @Bean
     public Binding indexBinding() {
         return BindingBuilder
                 .bind(indexQueue())
                 .to(dmsExchange())
                 .with(routingKey);
+    }
+
+    @Bean
+    public Binding ocrResultBinding() {
+        return BindingBuilder
+                .bind(ocrResultQueue())
+                .to(dmsExchange())
+                .with(ocrResultRoutingKey);
     }
 }
