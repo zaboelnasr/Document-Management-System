@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<seed>
+  <documents>
+    <document>
+      <file_name>gamma.pdf</file_name>
+      <summary>Gamma doc placeholder text.</summary>
+      <bucket>documents</bucket>
+      <object_key>33333333-3333-3333-3333-333333333333-gamma.pdf</object_key>
+      <content_type>application/pdf</content_type>
+      <size>777777</size>
+      <content></content>
+      <created_at>2026-01-22T08:05:00</created_at>
+      <updated_at>2026-01-22T08:05:00</updated_at>
+      <review>
+        <status>OPEN</status>
+        <updated_at>2026-01-22T08:15:00</updated_at>
+      </review>
+    </document>
+    <document>
+      <file_name>delta.pdf</file_name>
+      <summary>Delta doc placeholder text.</summary>
+      <bucket>documents</bucket>
+      <object_key>44444444-4444-4444-4444-444444444444-delta.pdf</object_key>
+      <content_type>application/pdf</content_type>
+      <size>888888</size>
+      <content></content>
+      <created_at>2026-01-22T09:45:00</created_at>
+      <updated_at>2026-01-22T09:45:00</updated_at>
+      <review>
+        <status>OPEN</status>
+        <updated_at>2026-01-22T09:55:00</updated_at>
+      </review>
+    </document>
+  </documents>
+</seed>
