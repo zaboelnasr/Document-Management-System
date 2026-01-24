@@ -6,7 +6,21 @@ spring:
   jpa:
     hibernate:
       ddl-auto: none
+  rabbitmq:
+    host: ${SPRING_RABBITMQ_HOST:rabbitmq}
+    port: ${SPRING_RABBITMQ_PORT:5672}
+    username: ${SPRING_RABBITMQ_USERNAME:guest}
+    password: ${SPRING_RABBITMQ_PASSWORD:guest}
+
+dms:
+  rmq:
+    exchange: ${DMS_RMQ_EXCHANGE:dms.exchange}
+    routing:
+      index: ${DMS_RMQ_ROUTING_INDEX:dms.document.index}
 
 schedule:
-  input-folder: /data/incoming
-  archive-folder: /data/archive
+  input-folder: schedule-worker/input-xml
+  file-pattern: "*.xml"
+  archive-folder: schedule-worker/archive-xml
+  batch-size: 100
+  cron: "0 50 16 * * *"

@@ -20,7 +20,7 @@ public class IndexingListener {
         this.elasticsearchClient = elasticsearchClient;
     }
 
-    @RabbitListener(queues = "${DMS_RMQ_QUEUE_INDEX}")
+    @RabbitListener(queues = "${dms.rmq.queue.index}")
     public void handleIndexMessage(String messageJson) throws IOException {
         Map<String, Object> msg = mapper.readValue(messageJson, Map.class);
 

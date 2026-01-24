@@ -202,6 +202,9 @@ services:
       - ./schedule-worker/data:/data
     environment:
       - SPRING_PROFILES_ACTIVE=docker
+      - SCHEDULE_INPUT_FOLDER=/data/incoming
+      - SCHEDULE_ARCHIVE_FOLDER=/data/archive
+      - SCHEDULE_FILE_PATTERN=*.xml
 
 
 
